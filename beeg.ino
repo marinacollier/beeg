@@ -80,16 +80,14 @@ int mapPwm(int value) {
 
 //Calcula o pwm numa base exponencial
 int calculaPwmExponencial(int value) {
-	int x = 0;
+	int x = mapPwm(value);
 	int k = 0;
-
+	
 	if(value > 0) {
-		x = mapPwm(value);
 		k = (8 * M_LN2)/255;
 		return exp(k * x) - 1;
 	}
 	else if(value < 0) {
-		x = mapPwm(value);
 		k = ((-1) * (8 * M_LN2))/255;
 		return 1 - exp(k * x);
 	}
