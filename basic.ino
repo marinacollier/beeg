@@ -55,7 +55,6 @@ void loop() {
   //leitura dos canais do controle
    aile= pulseIn(AILE, HIGH);  
    ele= pulseIn(ELE,HIGH); 
-} 
 /*int MspAile (int value1) {
   value1=map(aile,MIN,MAX,-255,255);
   return value1;
@@ -65,10 +64,6 @@ int MapEle(int value2){
   value2=map(ele,MIN,MAX,-255,255);
   return value2;
 }*/
- int mapPwm(int value) {
-   return map(value, MIN, MAX, -255, 255);
-}
-   
 //condição parado  
   if(((aile >= LIMIAR_MIN_AILE)  && (aile <= LIMIAR_MAX_AILE))  && ((ele <= LIMIAR_MIN_ELE) && (ele <= LIMIAR_MAX_ELE))){
    potencia = map(ele,MIN,MAX,-255,255);
@@ -151,4 +146,7 @@ int MapEle(int value2){
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,potencia); 
     }
+}
+int mapPwm(int value) {
+   return map(value, MIN, MAX, -255, 255);
 }
