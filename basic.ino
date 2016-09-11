@@ -55,7 +55,7 @@ void loop() {
   //leitura dos canais do controle
    aile= pulseIn(AILE, HIGH);  
    ele= pulseIn(ELE,HIGH); 
-   
+} 
 /*int MspAile (int value1) {
   value1=map(aile,MIN,MAX,-255,255);
   return value1;
@@ -65,8 +65,8 @@ int MapEle(int value2){
   value2=map(ele,MIN,MAX,-255,255);
   return value2;
 }*/
-   int mapPwm(int value) {
- return map(value, MIN, MAX, -255, 255);
+ int mapPwm(int value) {
+   return map(value, MIN, MAX, -255, 255);
 }
    
 //condição parado  
