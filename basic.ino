@@ -31,12 +31,14 @@
 //Vão guardar as leituras vindas do controle
 int aile = 0;
 int ele = 0;
+int ele_potencia = 0;
+int aile_potencia = 0;
 int potencia = 0;
 //limiar aile ele
 #define LIMIAR_MAX_AILE 111
 #define LIMIAR_MIN_AILE 101
-#define LIMIAR_MAX_ELE 111  //valores de teste , amanhã mudamos
-#define LIMIAR_MIN_ELE 101
+#define LIMIAR_MAX_ELE  111  //valores de teste , amanhã mudamos
+#define LIMIAR_MIN_ELE  101 
 
 void setup() {
   // put your setup code here, to run once:
@@ -53,8 +55,11 @@ void setup() {
 void loop() {
   
   //leitura dos canais do controle
-   aile= pulseIn(AILE, HIGH);  
-   ele= pulseIn(ELE,HIGH); 
+   aile = pulseIn(AILE, HIGH);  
+   ele = pulseIn(ELE,HIGH);
+   ele_potencia = mapPwm(ele);
+   aile_potencia = mapPwm(aile);
+   
 /*int MspAile (int value1) {
   value1=map(aile,MIN,MAX,-255,255);
   return value1;
@@ -75,7 +80,7 @@ int MapEle(int value2){
   }
   //condição para frente
   else if(((aile >= LIMIAR_MIN_AILE)  && (aile <= LIMIAR_MAX_AILE)) && (ele > LIMIAR_MAX_ELE)){
-    potencia = map(ele,MIN,MAX,-255,255);  
+      potencia = ele_potencia;//map(ele,MIN,MAX,-255,255);  
    // if(potencia>245) {potencia=255;} 
       analogWrite(MOTOR_E1,potencia);
       digitalWrite(MOTOR_E2,LOW);
