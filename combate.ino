@@ -1,5 +1,5 @@
 
- /* basic.ino
+ /* combate.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão e Marcus Vinícius
  * 05/09/2016
