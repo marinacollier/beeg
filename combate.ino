@@ -42,7 +42,7 @@ int potencia = 0;
 #define LIMIAR_MIN_ELE  -100 
 
 void setup() {
-  // put your setup code here, to run once:
+  // Define entradas e saídas
   pinMode(AILE, INPUT);
   pinMode(ELE, INPUT);
 
@@ -60,15 +60,17 @@ void loop() {
   aile = pulseIn(AILE, HIGH);  
   ele = pulseIn(ELE,HIGH);
   
-   
+  //debug para leitura do controle   
   Serial.print("AILE : ");
   Serial.println(aile);
   Serial.print("ELE : ");
   Serial.println(ele);
   delay(500);
-  
-   if(aile != 0 && ele !=0)
+
+ //condição que impede que o robô se movimente quando o CONTROLE estiver DESLIGADO
+   if(aile != 0 && ele !=0)             
 { 
+  //debug para sinais mapeados
    ele_potencia = potenciaPwmEle(ele);
    aile_potencia = potenciaPwmAile(aile);
    Serial.print(" Ele mapiado = ");
@@ -83,7 +85,6 @@ void loop() {
      
 
 //condição parado
- 
     if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
    // potencia = map(ele,MIN,MAX,-255,255);
    // if(potencia>245) {potencia=255;}
@@ -91,17 +92,19 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
       digitalWrite(MOTOR_D2,LOW);
+      //DEBUG
       Serial.println("parado");
       delay(500);
   }
   //condição para frente
-  else if(((aile_potencia >= LIMIAR_MIN_AILE-60)  && (aile_potencia <= LIMIAR_MAX_AILE-60)) && (ele_potencia > LIMIAR_MAX_ELE-30)){
+    else if(((aile_potencia >= LIMIAR_MIN_AILE-60)  && (aile_potencia <= LIMIAR_MAX_AILE-60)) && (ele_potencia > LIMIAR_MAX_ELE-30)){
    // potencia = ele_potencia;//map(ele,MIN,MAX,-255,255);  
    // if(potencia>245) {potencia=255;} 
       analogWrite(MOTOR_E1,ele_potencia);
       digitalWrite(MOTOR_E2,LOW);
       analogWrite(MOTOR_D1,ele_potencia);
       digitalWrite(MOTOR_D2,LOW);
+      //DEBUG
       Serial.print("potencia: "); 
       Serial.println(ele_potencia);
       Serial.println("FRENTE");
@@ -115,6 +118,7 @@ void loop() {
       analogWrite(MOTOR_E2,ele_potencia);
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,ele_potencia); 
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("TRÁS");
@@ -128,6 +132,7 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
       digitalWrite(MOTOR_D2,LOW);
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(aile_potencia);
       Serial.println("DIREITA");
@@ -141,6 +146,7 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       analogWrite(MOTOR_D1,aile_potencia);
       digitalWrite(MOTOR_D2,LOW);
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(aile_potencia);
       Serial.println("ESQUERDA");
@@ -154,6 +160,7 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       analogWrite(MOTOR_D1,ele_potencia/DIV);
       digitalWrite(MOTOR_D2,LOW); 
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL FRENTE DIREITA");
@@ -167,6 +174,7 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       analogWrite(MOTOR_D1,ele_potencia);
       digitalWrite(MOTOR_D2,LOW);
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL FRENTE ESQUERDA");
@@ -180,6 +188,7 @@ void loop() {
       analogWrite(MOTOR_E2,ele_potencia);
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,ele_potencia/DIV);
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL TRAS DIREITA");
@@ -193,6 +202,7 @@ void loop() {
       analogWrite(MOTOR_E2,ele_potencia/DIV);
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,ele_potencia);
+      //DEBUG
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL TRAS ESQUERDA");
@@ -210,27 +220,27 @@ int mapPwmEle(int value) {
 }
 **/
 
-//Função que mapeia os valores de aile e limita a potência
+//Função que mapeia o sinal aile do controle e limita a potência MÁXIMA e MÍNÍMA
 int potenciaPwmAile(int sinal) {
     int potencia = map(sinal, MIN, MAX, -255, 255);               //mapeando aile
-    if(abs(potencia) > VELOCIDADE_MAXIMA) {                   //limitando velocidade máxima
+    if(abs(potencia) > VELOCIDADE_MAXIMA) {                       //limitando velocidade máxima
       return (potencia/abs(potencia)) * VELOCIDADE_MAXIMA;
     }
-      else if(abs(potencia) < VELOCIDADE_MINIMA){
-        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;
+      else if(abs(potencia) < VELOCIDADE_MINIMA){                 //limitando velocidade mínima (para não forçar o motor)
+        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;  
       }
         else{
           return potencia;
         }
   }
-//Função que mapeia os valores de ele e limita a potência
+//Função que mapeia os sinais de ele do controle e limita a potência MÁXIMA E MÍNIMA
 int potenciaPwmEle(int sinal) {
     int potencia = map(sinal, MIN, MAX, -255, 255);             //mapeando a ele
-    if(abs(potencia) > VELOCIDADE_MAXIMA) {                 //limitando a velocidade máxima 
+    if(abs(potencia) > VELOCIDADE_MAXIMA) {                     //limitando a velocidade máxima 
      return (potencia/abs(potencia)) * VELOCIDADE_MAXIMA;
     }
-      else if(abs(potencia) < VELOCIDADE_MINIMA){
-        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;
+      else if(abs(potencia) < VELOCIDADE_MINIMA){               //limitando velocidade mínima (para não forçar o motor)
+        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;    
       }
       else {
         return potencia;
