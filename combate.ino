@@ -51,7 +51,7 @@ void setup() {
   pinMode(MOTOR_D1, OUTPUT);
   pinMode(MOTOR_D2, OUTPUT);
   Serial.begin(9600);
-  Serial.flush();
+  Serial.flush();               //limpa o lixo eletrônico
 }
 
 void loop() {
