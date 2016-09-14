@@ -1,5 +1,4 @@
-
- /* basic.ino
+/* basic.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão e Marcus Vinícius
  * 05/09/2016
@@ -15,6 +14,7 @@
 #define MOTOR_D1 5
 #define MOTOR_D2 6
 
+#define DEBUG 0
 
 //Define as entradas de sinal do controle
 #define AILE A0
@@ -27,14 +27,14 @@
 //#define TOLERANCIA 30
 #define VELOCIDADE_MAXIMA 250
 #define VELOCIDADE_MINIMA 10    //Mudar de acordo com o robô
-#define DIV  2                  //divisor de potência para diagonal,valores de teste , amanhã mudamos
+#define MULT  0.5                  //divisor de potência para diagonal,valores de teste , amanhã mudamos
 
 //Vão guardar as leituras vindas do controle
 int aile = 0;
 int ele = 0;
 int ele_potencia = 0;
 int aile_potencia = 0;
-int potencia = 0;
+
 //limiar aile ele
 #define LIMIAR_MAX_AILE 100
 #define LIMIAR_MIN_AILE -100
@@ -60,30 +60,37 @@ void loop() {
   aile = pulseIn(AILE, HIGH);  
   ele = pulseIn(ELE,HIGH);
   
-   
+  if (DEBUG){
   Serial.print("AILE : ");
   Serial.println(aile);
   Serial.print("ELE : ");
   Serial.println(ele);
   delay(500);
+  }
   
-   if(aile != 0 && ele !=0)
+  
+     if(aile != 0 && ele !=0)
 { 
    ele_potencia = potenciaPwmEle(ele);
    aile_potencia = potenciaPwmAile(aile);
-   Serial.print(" Ele mapiado = ");
-   Serial.println(ele_potencia);
-   Serial.print(" Aile mapiado = ");
-   Serial.println(aile_potencia);
- /* Serial.print("AILE : ");
+   
+   if (DEBUG){
+  Serial.print(" Ele mapiado = ");
+  Serial.println(ele_potencia);
+  Serial.print(" Aile mapiado = ");
+  Serial.println(aile_potencia);
+  Serial.print("AILE : ");
   Serial.println(aile_potencia);
   Serial.print("ELE : ");
   Serial.println(ele_potencia);
-  delay(500); */
-     
+  delay(500); 
+   }
 
 //condição parado
- 
+
+//if(tempo_agora - millis( < 2000)
+  
+  
     if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
    // potencia = map(ele,MIN,MAX,-255,255);
    // if(potencia>245) {potencia=255;}
@@ -91,36 +98,56 @@ void loop() {
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
       digitalWrite(MOTOR_D2,LOW);
+      if(DEBUG){
       Serial.println("parado");
       delay(500);
+      }
   }
   //condição para frente
   else if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE)) && (ele_potencia > LIMIAR_MAX_ELE)){
    // potencia = ele_potencia;//map(ele,MIN,MAX,-255,255);  
    // if(potencia>245) {potencia=255;} 
-      
-      analogWrite(MOTOR_E1,ele_potencia);
+      if(aile = -10){
+      analogWrite(MOTOR_E1,250*MULT);
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,ele_potencia/DIV);
-      digitalWrite(MOTOR_D2,LOW); 
-      Serial.print("potencia: ");
+      analogWrite(MOTOR_D1,250);
+      digitalWrite(MOTOR_D2,LOW);
+      }
+      else{
+      analogWrite(MOTOR_E1,aile_potencia*MULT);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,aile_potencia);
+      digitalWrite(MOTOR_D2,LOW);
+      }
+     if(DEBUG){ 
+     Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL FRENTE DIREITA");
       delay(500);
+     }
     }
      //condição para trás
-  else if(((aile_potencia >= LIMIAR_MIN_AILE+40)  && (aile_potencia <= LIMIAR_MAX_AILE-60)) && (ele_potencia < LIMIAR_MIN_ELE)){
+  else if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE)) && (ele_potencia < LIMIAR_MIN_ELE)){
   //potencia = map(ele,MIN,MAX,-255,255);
   //if(potencia>245) {potencia=255;}   
-      
+      if(ele <= -10 || ele >= 10){
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,ele_potencia/DIV);
+      analogWrite(MOTOR_E2,250);
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,ele_potencia);
-      Serial.print("potencia: ");
+      analogWrite(MOTOR_D2,250*MULT);
+      }
+      else{
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,ele_potencia);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,ele_potencia*MULT);
+      }
+      if(DEBUG){
+     Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL TRAS ESQUERDA");
       delay(500); 
+      }
     } 
     //condição para direita
   else if(((ele_potencia >= LIMIAR_MIN_ELE)  && (ele_potencia <= LIMIAR_MAX_ELE)) && (aile_potencia > LIMIAR_MAX_AILE)){
@@ -128,89 +155,141 @@ void loop() {
   // if(potencia>245) {potencia=255;}  
       
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,ele_potencia);
+      analogWrite(MOTOR_E2,aile_potencia*MULT);
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,ele_potencia/DIV); 
+      analogWrite(MOTOR_D2,aile_potencia); 
+      if(DEBUG){
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL TRAS DIREITA");
       delay(500);
+      }
     }
    //condição para esquerda
   else if(((ele_potencia >= LIMIAR_MIN_ELE)  && (ele_potencia <= LIMIAR_MAX_ELE)) && (aile_potencia < LIMIAR_MIN_AILE)){
    //potencia = map(aile,MIN,MAX,-255,255);   
    // if(potencia>245) {potencia=255;}
-      
-      analogWrite(MOTOR_E1,ele_potencia/DIV);
+   if(ele > 14){
+      analogWrite(MOTOR_E1,250*MULT);
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,ele_potencia);
+      analogWrite(MOTOR_D1,250);
       digitalWrite(MOTOR_D2,LOW);
+   }
+   else{
+      analogWrite(MOTOR_E1,aile_potencia*MULT);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,aile_potencia);
+      digitalWrite(MOTOR_D2,LOW);
+   
+   
+   }
+     if(DEBUG){
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("DIAGONAL FRENTE ESQUERDA");
       delay(500);
+     }
     }
     //diagonal frente direita
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){
     //potencia = map(ele,MIN,MAX,-255,255);  
    // if(potencia>245) {potencia=255;} 
-      
+      if (aile >=138){ 
+      analogWrite(MOTOR_E1,241);
+      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_D1,LOW);
+      digitalWrite(MOTOR_D2,LOW);
+      }
+      else{
       analogWrite(MOTOR_E1,aile_potencia);
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
       digitalWrite(MOTOR_D2,LOW);
+        
+      }
+      
+      if(DEBUG){
       Serial.print("potencia: ");
       Serial.println(aile_potencia);
       Serial.println("DIREITA");
-      delay(500); 
+      delay(500);
+      }
     }
    //diagonal frente esquerda
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia < LIMIAR_MIN_AILE)){
    //potencia = map(ele,MIN,MAX,-255,255);
    //if(potencia>245) {potencia=255;}  
-      if(ele > 1770){
-      analogWrite(MOTOR_E1,250);}
-         
+      if(ele > 161){
+      analogWrite(MOTOR_E1,250);
       digitalWrite(MOTOR_E2,LOW);
-      if  (ele <= 1700){
-      analogWrite(MOTOR_D1,ele_potencia);} //alterei condições 
-     
+      analogWrite(MOTOR_D1,250); 
       digitalWrite(MOTOR_D2,LOW);
+      }
+      else {
+      analogWrite(MOTOR_E1,ele_potencia);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,ele_potencia); 
+      digitalWrite(MOTOR_D2,LOW);
+      }
+      
+      if (DEBUG){
       Serial.print("potencia: "); 
       Serial.println(ele_potencia);
       Serial.println("FRENTE");
       delay(500); 
       }
       
+    }
     
    //diagonal tras direita
     else if((ele_potencia < LIMIAR_MIN_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){
     //potencia = map(ele,MIN,MAX,-255,255);  
     //if(potencia>245) {potencia=255;} 
-      
+      if (aile > 144){
       digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,250);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,250); 
+      }
+      else{
+       digitalWrite(MOTOR_E1,LOW);
       analogWrite(MOTOR_E2,ele_potencia);
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,ele_potencia); 
+      
+      
+      }
+      if(DEBUG){
       Serial.print("potencia: ");
       Serial.println(ele_potencia);
       Serial.println("TRAS");
       delay(500);
+      }
     }
    //diagonal tras esquerda
     else if((ele_potencia < LIMIAR_MIN_ELE) && (aile_potencia < LIMIAR_MIN_AILE)){
     //potencia = map(ele,MIN,MAX,-255,255);
     //if(potencia>245) {potencia=255;}   
-      
+      if(aile >= -145){
       digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,241);
+      digitalWrite(MOTOR_D2,LOW);
+      }
+      else{
+        digitalWrite(MOTOR_E1,LOW);
       digitalWrite(MOTOR_E2,LOW);
       analogWrite(MOTOR_D1,aile_potencia);
       digitalWrite(MOTOR_D2,LOW);
+        
+      }
+      if(DEBUG){
       Serial.print("potencia: ");
       Serial.println(aile_potencia);
       Serial.println("ESQUERDA");
       delay(500); 
     }
+}
 }
 }
 
