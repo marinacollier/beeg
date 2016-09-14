@@ -14,7 +14,7 @@
 #define MOTOR_D1 5
 #define MOTOR_D2 6
 
-#define DEBUG 0
+#define DEBUG 1
 
 //Define as entradas de sinal do controle
 #define AILE A0
@@ -40,6 +40,9 @@ int aile_potencia = 0;
 #define LIMIAR_MIN_AILE -100
 #define LIMIAR_MAX_ELE  100 
 #define LIMIAR_MIN_ELE  -100 
+
+//Compensação de potencia do motor ___
+#define COMP 40
 
 void setup() {
   // put your setup code here, to run once:
@@ -68,16 +71,45 @@ void loop() {
   delay(500);
   }
   
-  
-     if(aile != 0 && ele !=0)
-{ 
+  //TRAVA DE DESLIGAMENTO
+  /*while ((aile==0) && (ele==0)){
+      digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_D1,LOW);
+      digitalWrite(MOTOR_D2,LOW);
+      if(DEBUG){
+      Serial.print("AILE : ");
+      Serial.println(aile);
+      Serial.print("ELE : ");
+      Serial.println(ele);
+      Serial.println("TRAVADO");
+      delay(500);
+      } 
+      if ((aile!=0 && ele!=0)){
+        break;
+      }
+  }*/
+  /*if((aile==0) &&(ele==0){
+   // potencia = map(ele,MIN,MAX,-255,255);
+   // if(potencia>245) {potencia=255;}
+      digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_D1,LOW);
+      digitalWrite(MOTOR_D2,LOW);
+      if(DEBUG){
+      Serial.println("TRAVA");
+      delay(500);
+   }*/
+      
+   /*else if(aile != 0 && ele !=0)
+  {*/
    ele_potencia = potenciaPwmEle(ele);
    aile_potencia = potenciaPwmAile(aile);
    
    if (DEBUG){
-  Serial.print(" Ele mapiado = ");
+  Serial.print(" Ele mapeado = ");
   Serial.println(ele_potencia);
-  Serial.print(" Aile mapiado = ");
+  Serial.print(" Aile mapeado = ");
   Serial.println(aile_potencia);
   Serial.print("AILE : ");
   Serial.println(aile_potencia);
@@ -85,12 +117,8 @@ void loop() {
   Serial.println(ele_potencia);
   delay(500); 
    }
-
-//condição parado
-
-//if(tempo_agora - millis( < 2000)
-  
-  
+ //} 
+ 
     if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
    // potencia = map(ele,MIN,MAX,-255,255);
    // if(potencia>245) {potencia=255;}
@@ -291,7 +319,7 @@ void loop() {
     }
 }
 }
-}
+//}
 
 /** 
   //funções que mapeiam - somente - os valores de aile e ele 
