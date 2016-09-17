@@ -1,7 +1,7 @@
 /* basic.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão e Marcus Vinícius
- * 05/09/2016
+ * 14/09/2016
  */
 
 //Inclui biblioteca para acesso a funções matemáticas avançadas
@@ -89,7 +89,7 @@ void loop() {
         break;
       }
   }*/
-  /*if((aile==0) &&(ele==0){
+  if((aile==0) &&(ele==0)){
    // potencia = map(ele,MIN,MAX,-255,255);
    // if(potencia>245) {potencia=255;}
       digitalWrite(MOTOR_E1,LOW);
@@ -99,10 +99,11 @@ void loop() {
       if(DEBUG){
       Serial.println("TRAVA");
       delay(500);
-   }*/
+      }
+  }
       
-   /*else if(aile != 0 && ele !=0)
-  {*/
+   else if(aile != 0 && ele !=0)
+  {
    ele_potencia = potenciaPwmEle(ele);
    aile_potencia = potenciaPwmAile(aile);
    
@@ -116,8 +117,7 @@ void loop() {
   Serial.print("ELE : ");
   Serial.println(ele_potencia);
   delay(500); 
-   }
- //} 
+   } 
  
     if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
    // potencia = map(ele,MIN,MAX,-255,255);
@@ -226,13 +226,13 @@ void loop() {
       analogWrite(MOTOR_E1,241);
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
-      digitalWrite(MOTOR_D2,LOW);
+      digitalWrite(MOTOR_D2,241);
       }
       else{
       analogWrite(MOTOR_E1,aile_potencia);
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
-      digitalWrite(MOTOR_D2,LOW);
+      digitalWrite(MOTOR_D2,aile_potencia);
         
       }
       
@@ -300,13 +300,13 @@ void loop() {
     //if(potencia>245) {potencia=255;}   
       if(aile >= -145){
       digitalWrite(MOTOR_E1,LOW);
-      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_E2,241);
       analogWrite(MOTOR_D1,241);
       digitalWrite(MOTOR_D2,LOW);
       }
       else{
-        digitalWrite(MOTOR_E1,LOW);
-      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_E2,aile_potencia);
       analogWrite(MOTOR_D1,aile_potencia);
       digitalWrite(MOTOR_D2,LOW);
         
@@ -316,10 +316,10 @@ void loop() {
       Serial.println(aile_potencia);
       Serial.println("ESQUERDA");
       delay(500); 
+      }
     }
+  }
 }
-}
-//}
 
 /** 
   //funções que mapeiam - somente - os valores de aile e ele 
