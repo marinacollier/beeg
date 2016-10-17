@@ -102,7 +102,7 @@ void loop() {
       digitalWrite(MOTOR_D2,LOW);
       
       if(DEBUG){
-      Serial.println("parado");
+      Serial.println("PARADO");
       delay(500);
       }
   }
