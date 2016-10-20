@@ -13,7 +13,7 @@
 #define MOTOR_D1 5
 #define MOTOR_D2 6
 
-#define DEBUG 1
+#define DEBUG 0
 
 //Define as entradas de sinal do controle
 #define AILE A0
@@ -26,6 +26,7 @@
 #define VELOCIDADE_MAXIMA 250
 #define VELOCIDADE_MINIMA 10    //Mudar de acordo com o robô
 #define MULT  0.5                  //divisor de potência para diagonal,valores de teste , amanhã mudamos
+#define COMP 4
 
 //Vão guardar as leituras vindas do controle
 int aile = 0;
@@ -123,12 +124,12 @@ void loop() {
       
     }
      //condição para trás
-  else if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE)) && (ele_potencia < LIMIAR_MIN_ELE)){
+  else if(((aile_potencia >= LIMIAR_MIN_AILE-25)  && (aile_potencia <= LIMIAR_MAX_AILE+20)) && (ele_potencia < LIMIAR_MIN_ELE)){
      
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,ele_potencia);
+      analogWrite(MOTOR_E2,abs(ele_potencia));
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,ele_potencia); 
+      analogWrite(MOTOR_D2,abs(ele_potencia)); 
       
       if(DEBUG){
       Serial.print("potencia: ");
@@ -155,10 +156,10 @@ void loop() {
   }
    //condição para esquerda
   else if(((ele_potencia >= LIMIAR_MIN_ELE)  && (ele_potencia <= LIMIAR_MAX_ELE)) && (aile_potencia < LIMIAR_MIN_AILE)){  
-
+ 
       digitalWrite(MOTOR_E1,LOW);
-      digitalWrite(MOTOR_E2,aile_potencia);
-      analogWrite(MOTOR_D1,aile_potencia);
+      digitalWrite(MOTOR_E2,abs(aile_potencia));
+      analogWrite(MOTOR_D1,abs(aile_potencia));
       digitalWrite(MOTOR_D2,LOW);
    
       if(DEBUG){
@@ -172,14 +173,14 @@ void loop() {
     //diagonal frente direita
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){
 
-      analogWrite(MOTOR_E1,aile_potencia*MULT);
+      analogWrite(MOTOR_E1,ele_potencia);
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,aile_potencia);
+      analogWrite(MOTOR_D1,ele_potencia*MULT);
       digitalWrite(MOTOR_D2,LOW);
      
      if(DEBUG){ 
      Serial.print("potencia: ");
-     Serial.println(ele_potencia);
+     Serial.println(aile_potencia);
      Serial.println("DIAGONAL FRENTE DIREITA");
      delay(500);
      }
@@ -187,10 +188,10 @@ void loop() {
     }
    //diagonal frente esquerda
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia < LIMIAR_MIN_AILE)){
-
-      analogWrite(MOTOR_E1,aile_potencia*MULT);
+      
+      analogWrite(MOTOR_E1,abs(ele_potencia)*MULT);
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,aile_potencia);
+      analogWrite(MOTOR_D1,abs(ele_potencia));
       digitalWrite(MOTOR_D2,LOW);
  
       if(DEBUG){
@@ -205,12 +206,12 @@ void loop() {
     else if((ele_potencia < LIMIAR_MIN_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){ 
       
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,aile_potencia*MULT);
+      analogWrite(MOTOR_E2,abs(ele_potencia)*MULT);
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,aile_potencia); 
+      analogWrite(MOTOR_D2,abs(ele_potencia)); 
       if(DEBUG){
       Serial.print("potencia: ");
-      Serial.println(ele_potencia);
+      Serial.println(aile_potencia);
       Serial.println("DIAGONAL TRAS DIREITA");
       delay(500);
       }
@@ -218,18 +219,12 @@ void loop() {
    //diagonal tras esquerda
     else if((ele_potencia < LIMIAR_MIN_ELE) && (aile_potencia < LIMIAR_MIN_AILE)){
    
-      if(ele <= -10 || ele >= 10){
+   
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,250);
+      analogWrite(MOTOR_E2,abs(ele_potencia));
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,250*MULT);
-      }
-      else{
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,ele_potencia);
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,ele_potencia*MULT);
-      }
+      analogWrite(MOTOR_D2,abs(ele_potencia)*MULT);
+
       if(DEBUG){
      Serial.print("potencia: ");
       Serial.println(ele_potencia);
