@@ -14,6 +14,7 @@
 #define MOTOR_D1 5
 #define MOTOR_D2 6
 
+
 #define DEBUG 1
 #define ESPERA 500
 
@@ -27,7 +28,7 @@
 //Intensidade máxima do sinal permitida como velocidade máxima
 #define VELOCIDADE_MAXIMA 255
 #define VELOCIDADE_MINIMA 10    //Mudar de acordo com o robô
-#define N 2
+#define N 3
 
 //Vão guardar as leituras vindas do controle
 int aile = 0;
@@ -72,22 +73,36 @@ inicializacao();
 if(((aile_filtrado >= LIMIAR_MIN_AILE) && (aile_filtrado <= LIMIAR_MAX_AILE)) && ((ele_filtrado >= LIMIAR_MIN_ELE) && (ele_filtrado <= LIMIAR_MAX_ELE)))
   parado();
 
-else if(((aile_filtrado >= LIMIAR_MIN_AILE) && (aile_filtrado <= LIMIAR_MAX_AILE)) && (ele_filtrado > LIMIAR_MAX_ELE)){
-   if(aile_filtrado >=-24 && aile_filtrado<=-19){
-    motorEsquerdo(ele_filtrado);
-    motorDireito(ele_filtrado);
-    }
-    else if(aile_filtrado > -19 && aile_filtrado <=250){
-    motorEsquerdo(ele_filtrado);
-    motorDireito(ele_filtrado-aile_filtrado);
-    }
-   else if(aile_filtrado >= -250 && aile_filtrado <-19){
-    motorEsquerdo(ele_filtrado+aile_filtrado);
-    motorDireito(ele_filtrado);
-    }
- }
+else if(ele_filtrado > 40 && ele_filtrado <= 255){
+if(aile_filtrado >=-10 && aile_filtrado <= 10)
+Serial.println("FRENTE");
+else if((ele_filtrado > 40 && ele_filtrado <= 255)&& (aile_filtrado > 10 && aile_filtrado < 250))
+Serial.println("FRENTE DIREITA");
+else if((ele_filtrado > 40 && ele_filtrado <= 255) &&(aile_filtrado > -250 && aile_filtrado < -10))
+Serial.println("FRENTE ESQUERDA");
+else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>18 && ele_filtrado <255))
+Serial.println("DIREITA CIMA");
+else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>18 && ele_filtrado <255))
+Serial.println("ESQUERDA CIMA");
+}
 
+else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado > 29 && aile_filtrado <= 255)){
+Serial.println("DIREITA");}
+else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado >= -255 && aile_filtrado <= -35)){
+Serial.println("ESQUERDA");}
 
+else if(ele_filtrado >=-255 && ele_filtrado <-40){
+if(aile_filtrado >=-10 && aile_filtrado <= 10 && (ele_filtrado >=-255 && ele_filtrado <-40))
+Serial.println("TRAS");
+else if((ele_filtrado >= -255 && ele_filtrado <-40)&& (aile_filtrado > 10 && aile_filtrado < 250))
+Serial.println("TRAS DIREITA");
+else if((ele_filtrado >=-255 && ele_filtrado <-40) &&(aile_filtrado > -250 && aile_filtrado < -10))
+Serial.println("TRAS ESQUERDA");
+else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>-255 && ele_filtrado <-40))
+Serial.println("DIREITA BAIXO");
+else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>-255 && ele_filtrado <-40))
+Serial.println("ESQUERDA BAIXO");
+}
 
 
 }
@@ -150,6 +165,40 @@ void motorDireito(int pwr) {
     digitalWrite(MOTOR_D1, LOW);
   }
 }
+void direcoes (int x){
+      if (x==1){
+      analogWrite(MOTOR_E1,VELOCIDADE_MAXIMA);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,VELOCIDADE_MAXIMA);
+      digitalWrite(MOTOR_D2,LOW);
+      }
+      else if(x==2){
+      analogWrite(MOTOR_E1,ele_filtrado);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,ele_filtrado-aile_filtrado);
+      digitalWrite(MOTOR_D2,LOW);        
+      }
+      else if(x==3){
+      analogWrite(MOTOR_E1,VELOCIDADE_MAXIMA);
+      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);        
+      }
+      else if(x==4){
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,aile_filtrado);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,abs(aile_filtrado-ele_filtrado));        
+      }
+      if (x==5){
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,VELOCIDADE_MAXIMA);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);
+      }
+      
+}
+
 
 
 
