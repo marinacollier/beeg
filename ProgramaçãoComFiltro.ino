@@ -179,24 +179,53 @@ void direcoes (int x){
       digitalWrite(MOTOR_D2,LOW);        
       }
       else if(x==3){
+      analogWrite(MOTOR_E1,aile_filtrado);
+      digitalWrite(MOTOR_E2,LOW);
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,abs(aile_filtrado-ele_filtrado));        
+      }
+      else if(x==4){
       analogWrite(MOTOR_E1,VELOCIDADE_MAXIMA);
       digitalWrite(MOTOR_E2,LOW);
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);        
       }
-      else if(x==4){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,aile_filtrado);
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(aile_filtrado-ele_filtrado));        
+      else if (x==5){
+      analogWrite(MOTOR_E1,abs(aile_filtrado));
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,LOW);
+      digitalWrite(MOTOR_D2,abs(aile_filtrado+ele_filtrado));
       }
-      if (x==5){
+      else if (x==6){
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,VELOCIDADE_MAXIMA);
+      analogWrite(MOTOR_E2,abs(ele_filtrado));
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);
+      analogWrite(MOTOR_D2,abs(-ele_filtrado+aile_filtrado)); 
       }
-      
+      else if (x==7){
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,abs(VELOCIDADE_MAXIMA));
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,abs(VELOCIDADE_MAXIMA)); 
+      }
+      else if (x==8){
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,abs(-ele_filtrado+aile_filtrado));
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,abs(ele_filtrado)); 
+      }
+      else if (x==9){
+      analogWrite(MOTOR_E1,(ele_filtrado-aile_filtrado));
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,abs(aile_filtrado));
+      digitalWrite(MOTOR_D2,LOW); 
+      }
+      else if (x==10){
+      digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,abs(VELOCIDADE_MAXIMA));
+      digitalWrite(MOTOR_D2,LOW); 
+      }
 }
 
 
