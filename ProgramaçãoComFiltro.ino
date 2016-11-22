@@ -75,44 +75,56 @@ if(((aile_filtrado >= LIMIAR_MIN_AILE) && (aile_filtrado <= LIMIAR_MAX_AILE)) &&
 
 else if(ele_filtrado > 40 && ele_filtrado <= 255){
 if(aile_filtrado >=-10 && aile_filtrado <= 10)
-Serial.println("FRENTE");
+ direcoes(1);
+//Serial.println("FRENTE");
 else if((ele_filtrado > 40 && ele_filtrado <= 255)&& (aile_filtrado > 10 && aile_filtrado < 250))
-Serial.println("FRENTE DIREITA");
+ direcoes(2); 
+//Serial.println("FRENTE DIREITA");
 else if((ele_filtrado > 40 && ele_filtrado <= 255) &&(aile_filtrado > -250 && aile_filtrado < -10))
-Serial.println("FRENTE ESQUERDA");
+direcoes(12);
+  //Serial.println("FRENTE ESQUERDA");
 else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>18 && ele_filtrado <255))
-Serial.println("DIREITA CIMA");
+direcoes(3);
+//Serial.println("DIREITA CIMA");
 else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>18 && ele_filtrado <255))
-Serial.println("ESQUERDA CIMA");
+direcoes(11);
+  //Serial.println("ESQUERDA CIMA");
 }
 
-else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado > 29 && aile_filtrado <= 255)){
-Serial.println("DIREITA");}
-else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado >= -255 && aile_filtrado <= -35)){
-Serial.println("ESQUERDA");}
+else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado > 29 && aile_filtrado <= 255))
+direcoes(4);
+//Serial.println("DIREITA");
+else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado >= -255 && aile_filtrado <= -35))
+direcoes(10);
+  //Serial.println("ESQUERDA");}
 
 else if(ele_filtrado >=-255 && ele_filtrado <-40){
 if(aile_filtrado >=-10 && aile_filtrado <= 10 && (ele_filtrado >=-255 && ele_filtrado <-40))
-Serial.println("TRAS");
+direcoes(7);
+  //Serial.println("TRAS");
 else if((ele_filtrado >= -255 && ele_filtrado <-40)&& (aile_filtrado > 10 && aile_filtrado < 250))
-Serial.println("TRAS DIREITA");
+direcoes(6);
+  //Serial.println("TRAS DIREITA");
 else if((ele_filtrado >=-255 && ele_filtrado <-40) &&(aile_filtrado > -250 && aile_filtrado < -10))
-Serial.println("TRAS ESQUERDA");
+direcoes(8);
+  //Serial.println("TRAS ESQUERDA");
 else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>-255 && ele_filtrado <-40))
-Serial.println("DIREITA BAIXO");
+direcoes(5);
+  //Serial.println("DIREITA BAIXO");
 else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>-255 && ele_filtrado <-40))
-Serial.println("ESQUERDA BAIXO");
+direcoes(9);
+  //Serial.println("ESQUERDA BAIXO");
 }
 
 
+
+
+
+
+
+
+
 }
-
-
-
-
-
-
-
 
 
 
@@ -191,16 +203,16 @@ void direcoes (int x){
       analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);        
       }
       else if (x==5){
-      analogWrite(MOTOR_E1,abs(aile_filtrado));
-      digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,LOW);
-      digitalWrite(MOTOR_D2,abs(aile_filtrado+ele_filtrado));
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,aile_filtrado);
+      analogWrite(MOTOR_D1,abs(aile_filtrado+ele_filtrado));
+      digitalWrite(MOTOR_D2,LOW);
       }
       else if (x==6){
       digitalWrite(MOTOR_E1,LOW);
       analogWrite(MOTOR_E2,abs(ele_filtrado));
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(-ele_filtrado+aile_filtrado)); 
+      analogWrite(MOTOR_D2,abs(ele_filtrado+aile_filtrado)); 
       }
       else if (x==7){
       digitalWrite(MOTOR_E1,LOW);
@@ -217,15 +229,28 @@ void direcoes (int x){
       else if (x==9){
       analogWrite(MOTOR_E1,(ele_filtrado-aile_filtrado));
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,abs(aile_filtrado));
-      digitalWrite(MOTOR_D2,LOW); 
+      digitalWrite(MOTOR_D1,LOW);
+      analogWrite(MOTOR_D2,abs(aile_filtrado)); 
       }
       else if (x==10){
       digitalWrite(MOTOR_E1,LOW);
-      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_E2,abs(VELOCIDADE_MAXIMA));
       analogWrite(MOTOR_D1,abs(VELOCIDADE_MAXIMA));
       digitalWrite(MOTOR_D2,LOW); 
       }
+    else if (x==11){
+      digitalWrite(MOTOR_E1,LOW);
+      analogWrite(MOTOR_E2,abs(aile_filtrado+ele_filtrado));
+      analogWrite(MOTOR_D1,abs(aile_filtrado));
+      digitalWrite(MOTOR_D2,LOW); 
+      }
+    else if(x==12){
+      analogWrite(MOTOR_E1,abs(ele_filtrado+aile_filtrado));
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_D1,abs(ele_filtrado));
+      digitalWrite(MOTOR_D2,LOW);
+      }
+  
 }
 
 
