@@ -1,318 +1,389 @@
-/* basic.ino
- * Código para controle de robô beetleweight
- * Autores: Isabella Galvão e Marcus Vinícius
- * 14/09/2016
- */
+#define MOTOR_D1    6
+#define MOTOR_D2    5
+#define MOTOR_E1    10
+#define MOTOR_E2    9
+#define LED         13
+#define ledverde    11
+#define VELOCIDADE_MAXIMA        254
+#define VELOCIDADE_BASE_RETA     180
+#define VELOCIDADE_BASE_CURVA    90       
+#define NUMERO_DE_SENSORES        7
+#define TEMPO_PARA_PARAR          0
+#define LIMIAR 200
+#define KPR      4.0    // kp para reta
+#define KDR      500.0   // kd para reta
+#define KIR      0.01     // ki para reta
+#define KPC      4.5   // Kp para cruva
+#define KDC     250.0     // kd para curva
+#define KIC     0.000555    // ki para curva
+#define RETA        1
+#define CURVA      -1
+#define DEBUG       0
+#define DELAY     1000
+#define DELAY_PARADA 300
+#define BRANCA      true
+#define PRETA       false
+#define TEMPO_PARA_FINAL           80000 //milissegundos
+#define TEMPO_LIMITE_ERRO_MARCACAO   200
+#define ESQUERDA    0
+#define DIREITA     1
+#define TESTE_DE_MARCACAO  10
+#define FINAL_POR_TEMPO     0
+#define FINAL_POR_MARCACAO  1
+#define FINAL_POR_CONTADOR  1
+#define NUMERO_DE_CRUZAMENTOS  2
+#define LIMITE_TEMPO_ESQUERDA  500
+#define N_CARACTERES           30
+#define ULTIMA_MARCACAO_ESQUERDA  22
 
-//Inclui biblioteca para acesso a funções matemáticas avançadas
-#include <math.h>
-
-
-//Define os pinos que os motores estarão conectados
-#define MOTOR_E1 11
-#define MOTOR_E2 10
-#define MOTOR_D1 5
-#define MOTOR_D2 6
-
-
-#define DEBUG 1
-#define ESPERA 500
-
-//Define as entradas de sinal do controle
-#define AILE A0
-#define ELE A1
-
-//Constantes para leitura do controle (Devem ser calibradas)
-#define MAX 1900
-#define MIN 1200
-//Intensidade máxima do sinal permitida como velocidade máxima
-#define VELOCIDADE_MAXIMA 255
-#define VELOCIDADE_MINIMA 10    //Mudar de acordo com o robô
-#define N 3
-
-//Vão guardar as leituras vindas do controle
-int aile = 0;
-int ele = 0;
-int ele_potencia = 0;
-int aile_potencia = 0;
-int ele_filtrado,aile_filtrado;
-int eleF[N],aileF[N];
-int EMA_S = 0;
-int EMA_S1 = 0;
-float EMA_B = 2.0/(N+1);
-
-
-
-
-
-//limiar aile ele
-#define LIMIAR_MAX_AILE 9
-#define LIMIAR_MIN_AILE -49
-#define LIMIAR_MAX_ELE  9 
-#define LIMIAR_MIN_ELE  -49
+short tipo = CURVA;
+float sensores[NUMERO_DE_SENSORES]           = {A6, A5, A4, A3, A2, A1, A0};
+float erros[NUMERO_DE_SENSORES]              = {-40.0, -25.0,-15.0, 0 , 15.0, 25.0, 40.0};
+float verificador_esquerda = A7;
+float verificador_direita = 4;
+float erro            = 0;
+double correcao        = 0;
+float erroAnterior    = 0;
+float somatorioDeErro = 0;
+float kpr = KPR;
+float kdr = KDR;
+float kir = KIR;
+float kpc = KPC;
+float kdc = KDC;
+float kic = KIC;
+float deltaTime = 0;
+long int ti = 0;
+long int tempo_ultima_marcacao   = 0;
+long int tempo_ultimo_cruzamento = 0; 
+int velocidadeAtualReta   = VELOCIDADE_BASE_RETA;
+int velocidadeAtualCurva = VELOCIDADE_BASE_CURVA;
+int conta = 0;
+int limiar            = 0;
+int tipoDeFinal       =-1;
+int contadorDeFinal   = 0;
+int parada            = false;
+int direito           = 0;
+int esquerdo          = 0;
+bool corDaLinha       = BRANCA;
+bool flagDeCruzamento    = false; //Se o flag for verdadeiro a proxima vez que os verificadores virem algoa será o cruzamento
+//bool flagDeVerificador[NUMERO_DE_VERIFICADORES] = {false, false};
+unsigned int ultimoProcesso = 0;
+unsigned int contadorDeVerificacaoEsquerda = 0;
+char buffer[N_CARACTERES+2];
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(AILE, INPUT);
-  pinMode(ELE, INPUT);
-
+  if(DEBUG){
+     Serial.begin(9600);
+     Serial.flush();
+  }
+  Serial.println("Inicio");
   pinMode(MOTOR_E1, OUTPUT);
   pinMode(MOTOR_E2, OUTPUT);
   pinMode(MOTOR_D1, OUTPUT);
   pinMode(MOTOR_D2, OUTPUT);
-  if(DEBUG){
-  Serial.begin(9600);
-  Serial.flush();
-  }
-  for(int i=0;i<N;i++){eleF[N]=0; aileF[N]=0;}
-}
-
-void loop (){
-inicializacao();
-
-if(((aile_filtrado >= LIMIAR_MIN_AILE) && (aile_filtrado <= LIMIAR_MAX_AILE)) && ((ele_filtrado >= LIMIAR_MIN_ELE) && (ele_filtrado <= LIMIAR_MAX_ELE)))
-  parado();
-
-else if(ele_filtrado > 40 && ele_filtrado <= 255){
-if(aile_filtrado >=-10 && aile_filtrado <= 10)
- direcoes(1);
-//Serial.println("FRENTE");
-else if((ele_filtrado > 40 && ele_filtrado <= 255)&& (aile_filtrado > 10 && aile_filtrado < 250))
- direcoes(2); 
-//Serial.println("FRENTE DIREITA");
-else if((ele_filtrado > 40 && ele_filtrado <= 255) &&(aile_filtrado > -250 && aile_filtrado < -10))
-direcoes(12);
-  //Serial.println("FRENTE ESQUERDA");
-else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>18 && ele_filtrado <255))
-direcoes(3);
-//Serial.println("DIREITA CIMA");
-else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>18 && ele_filtrado <255))
-direcoes(11);
-  //Serial.println("ESQUERDA CIMA");
-}
-
-else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado > 29 && aile_filtrado <= 255))
-direcoes(4);
-//Serial.println("DIREITA");
-else if(ele_filtrado >=-10 && ele_filtrado <=18 && (aile_filtrado >= -255 && aile_filtrado <= -35))
-direcoes(10);
-  //Serial.println("ESQUERDA");}
-
-else if(ele_filtrado >=-255 && ele_filtrado <-40){
-if(aile_filtrado >=-10 && aile_filtrado <= 10 && (ele_filtrado >=-255 && ele_filtrado <-40))
-direcoes(7);
-  //Serial.println("TRAS");
-else if((ele_filtrado >= -255 && ele_filtrado <-40)&& (aile_filtrado > 10 && aile_filtrado < 250))
-direcoes(6);
-  //Serial.println("TRAS DIREITA");
-else if((ele_filtrado >=-255 && ele_filtrado <-40) &&(aile_filtrado > -250 && aile_filtrado < -10))
-direcoes(8);
-  //Serial.println("TRAS ESQUERDA");
-else if ((aile_filtrado>30 && aile_filtrado <= 255)&&(ele_filtrado>-255 && ele_filtrado <-40))
-direcoes(5);
-  //Serial.println("DIREITA BAIXO");
-else if ((aile_filtrado>=-255 && aile_filtrado <-30)&&(ele_filtrado>-255 && ele_filtrado <-40))
-direcoes(9);
-  //Serial.println("ESQUERDA BAIXO");
-}
-
-
-
-
-
-
-
-
-
-}
-
-
-
-
-
-void inicializacao(){
-aile = pulseIn(AILE, HIGH);  
-ele = pulseIn(ELE,HIGH);
-ele_potencia = potenciaPwmEle(ele);
-aile_potencia = potenciaPwmAile(aile);
-ele_filtrado = filtroEle(ele_potencia);
-aile_filtrado = filtroAile(aile_potencia); 
-}
-
-void leitura_ele_aile(){
-Serial.print(" AILE : ");
-Serial.print(aile_filtrado);
-Serial.print(" ELE: ");
-Serial.println(ele_filtrado);
-delay(ESPERA);
-}
-void parado(){
-  digitalWrite(MOTOR_E1,LOW);
-  digitalWrite(MOTOR_E2,LOW);
-  digitalWrite(MOTOR_D1,LOW);
-  digitalWrite(MOTOR_D2,LOW);
-}
-
-
-void motorEsquerdo(int pwr) {
-
-  if (pwr > 0) {
-    analogWrite(MOTOR_E1, abs(pwr));
-    digitalWrite(MOTOR_E2, LOW);
-  }
-  else {
-    analogWrite(MOTOR_E2, abs(pwr));
-    digitalWrite(MOTOR_E1, LOW);
-  }
-}
-void motorDireito(int pwr) {
+  pinMode(LED,      OUTPUT);
+  pinMode(13, OUTPUT);
   
+  for(int i = 0; i < NUMERO_DE_SENSORES; i++)
+    pinMode(sensores[i], INPUT);
+  pinMode(verificador_esquerda, INPUT);
+  pinMode(verificador_direita, INPUT);
+  delay(1000);
+  calibrarSensores(10);
+  delay(1000);
 
-  if (pwr > 0) {
-    analogWrite(MOTOR_D1, abs(pwr));
-    digitalWrite(MOTOR_D2, LOW);
+  while(lerSensor(verificador_esquerda) == true){
+    digitalWrite(13, HIGH);
+    Serial.println("Esperando.");
   }
-  else {
-    analogWrite(MOTOR_D2, abs(pwr));
-    digitalWrite(MOTOR_D1, LOW);
+  for(int c=0; c<5 ; c++){
+    digitalWrite(13, LOW);
+    delay(50);
+    digitalWrite(13, HIGH);
+    delay(50);
   }
+  ti = millis();
+  digitalWrite(13, LOW);
 }
-void direcoes (int x){
-      if (x==1){
-      analogWrite(MOTOR_E1,VELOCIDADE_MAXIMA);
-      digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,VELOCIDADE_MAXIMA);
-      digitalWrite(MOTOR_D2,LOW);
-      }
-      else if(x==2){
-      analogWrite(MOTOR_E1,ele_filtrado);
-      digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,ele_filtrado-aile_filtrado);
-      digitalWrite(MOTOR_D2,LOW);        
-      }
-      else if(x==3){
-      analogWrite(MOTOR_E1,aile_filtrado);
-      digitalWrite(MOTOR_E2,LOW);
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(aile_filtrado-ele_filtrado));        
-      }
-      else if(x==4){
-      analogWrite(MOTOR_E1,VELOCIDADE_MAXIMA);
-      digitalWrite(MOTOR_E2,LOW);
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,VELOCIDADE_MAXIMA);        
-      }
-      else if (x==5){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,aile_filtrado);
-      analogWrite(MOTOR_D1,abs(aile_filtrado+ele_filtrado));
-      digitalWrite(MOTOR_D2,LOW);
-      }
-      else if (x==6){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(ele_filtrado));
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(ele_filtrado+aile_filtrado)); 
-      }
-      else if (x==7){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(VELOCIDADE_MAXIMA));
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(VELOCIDADE_MAXIMA)); 
-      }
-      else if (x==8){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(-ele_filtrado+aile_filtrado));
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(ele_filtrado)); 
-      }
-      else if (x==9){
-      analogWrite(MOTOR_E1,(ele_filtrado-aile_filtrado));
-      digitalWrite(MOTOR_E2,LOW);
-      digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(aile_filtrado)); 
-      }
-      else if (x==10){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(VELOCIDADE_MAXIMA));
-      analogWrite(MOTOR_D1,abs(VELOCIDADE_MAXIMA));
-      digitalWrite(MOTOR_D2,LOW); 
-      }
-    else if (x==11){
-      digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(aile_filtrado+ele_filtrado));
-      analogWrite(MOTOR_D1,abs(aile_filtrado));
-      digitalWrite(MOTOR_D2,LOW); 
-      }
-    else if(x==12){
-      analogWrite(MOTOR_E1,abs(ele_filtrado+aile_filtrado));
-      digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,abs(ele_filtrado));
-      digitalWrite(MOTOR_D2,LOW);
-      }
+
+void loop() { 
+   
+    deltaTime = (millis() - ultimoProcesso);
   
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int filtroEle(int sinal){
- /* for(int i= N-1;i>0;i--)eleF[i]=eleF[i-1];
-  eleF[0]=sinal;
-  long soma=0;
-  for(int i=0;i<N;i++)soma+=eleF[i];
-int filtrado = soma/N;*/
- EMA_S = (EMA_B*sinal) + ((1-EMA_B)*EMA_S);
-return EMA_S;
-}
-
-int filtroAile(int sinal1){
-  /*for(int i= N-1;i>0;i--)aileF[i]=aileF[i-1];
-  aileF[0]=sinal1;
-  long soma1=0;
-  for(int i=0;i<N;i++)soma1+=aileF[i];
-int filtrado1 = soma1/N;*/
- EMA_S1 = (EMA_B*sinal1) + ((1-EMA_B)*EMA_S1);
-return EMA_S1;
-}
-int potenciaPwmAile(int sinal) {
-    int potencia = map(sinal, MIN, MAX, -255, 255);               //mapeando aile
-    if(abs(potencia) > VELOCIDADE_MAXIMA) {                   //limitando velocidade máxima
-      return (potencia/abs(potencia)) * VELOCIDADE_MAXIMA;
+    ultimoProcesso = millis();
+    
+    erro = lerPontoAtual();
+    analizadorDeVerificadores();
+    correcao = TipoDeCorrecao(tipo); // editar tipo...
+    if((lerSensor(A4) == true && lerSensor(A3)== true) && lerSensor(A2) == true)
+    {
+       if(millis() - tempo_ultimo_cruzamento >= TEMPO_LIMITE_ERRO_MARCACAO) {
+          flagDeCruzamento = false;
+          tempo_ultimo_cruzamento = millis();
+       }
     }
-      else if(abs(potencia) < VELOCIDADE_MINIMA){
-        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;
+    else{
+    if(tipo == RETA)
+    { 
+      digitalWrite(13, LOW);
+      correcaoReta(correcao);
+    }
+    else
+      if(tipo == CURVA)
+      { 
+        correcaoCurva(correcao);
+        digitalWrite(13, HIGH);
       }
-        else{
-          return potencia;
-        }
-  }
-//Função que mapeia os valores de ele e limita a potência
-int potenciaPwmEle(int sinal) {
-    int potencia = map(sinal, MIN, MAX, -255, 255);             //mapeando a ele
-    if(abs(potencia) > VELOCIDADE_MAXIMA) {                 //limitando a velocidade máxima 
-     return (potencia/abs(potencia)) * VELOCIDADE_MAXIMA;
-    }
-      else if(abs(potencia) < VELOCIDADE_MINIMA){
-        return (potencia/abs(potencia)) * VELOCIDADE_MINIMA;
       }
-      else {
-        return potencia;
-    }
-  }
+    erroAnterior = erro;
+    prevenirWindUp();
+    somatorioDeErro += erro;
+    if (erro == 0) 
+      somatorioDeErro = 0; 
+    if(parada) 
+      para();
 
+ // if(verificaMarcacao(DIREITA))
+ // {para();}
+    if(millis() - ti >= TEMPO_PARA_FINAL){
+      para();
+    if(DEBUG)
+      delay(DELAY);
+ }
+}
+
+/*################################# FUNÇÕES DE LEITURA ########################################### */
+//Ler sensor. Recebe a porta que ele deve ler e retorna true se o sensor está fora da linha (na mesa)
+void calibrarSensores(int numeroDeIteracoes) 
+  {
+  //Lê a media de luminosidade na mesa e na linha. Esses valores definem a cor da mesa
+  unsigned int mediaDaMesa = 0;
+  unsigned int mediaDaLinha = 0;
+
+  digitalWrite(13, HIGH);
+  delay(50);
+  digitalWrite(13, LOW);
+
+  for (int i = 0; i < numeroDeIteracoes; i++) 
+  {
+    mediaDaMesa += (analogRead(verificador_esquerda));
+  }
  
+ for (int i = 0; i < numeroDeIteracoes; i++)
+ {
+    mediaDaLinha += analogRead(sensores[3]);
+ }
 
+  mediaDaMesa /= numeroDeIteracoes;
+  mediaDaLinha /= numeroDeIteracoes;
+  //O limiar é a média das médias
+//  limiar = (mediaDaMesa + mediaDaLinha) / 8;
+  limiar = LIMIAR;
+  Serial.print("Media da mesa : ");
+  Serial.println(mediaDaMesa);
+  Serial.print("Media da linha: ");   
+  Serial.println(mediaDaLinha);
+  Serial.print("Limite        : ");    
+  Serial.println(limiar);  
+  if (mediaDaMesa > mediaDaLinha)  
+  {
+    corDaLinha = BRANCA;
+  }
+  else 
+  {
+    corDaLinha = PRETA;
+  }
+}
+bool lerSensor(int porta) {
+  int leitura = 0;
+  
+  if(porta>13)
+  { 
+    if(porta == A0 || porta == A6)
+      return false;
+    leitura = analogRead(porta);
+    if ((corDaLinha == PRETA && leitura > limiar) || (corDaLinha == BRANCA && leitura < limiar)) {
+      return true;
+      Serial.print(analogRead(porta));   
+    }
+    else {
+      return false;
+    }
+  }
+  else
+  {  
+    leitura = digitalRead(porta);
+    if ((corDaLinha == PRETA && leitura == true) || (corDaLinha == BRANCA && leitura == false)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+}
+//Faz uma analize sobre a leitura dos verificadores
 
+void analizadorDeVerificadores()
+{
+    bool esquerda = 0; 
+    bool direita  = 0;
+    esquerda = lerSensor(verificador_esquerda);
+    direita  = lerSensor(verificador_direita);
+
+    if(esquerda) 
+    { 
+       digitalWrite(ledverde, HIGH);
+       if(millis() - tempo_ultima_marcacao >= TEMPO_LIMITE_ERRO_MARCACAO) 
+       {
+          if(conta!=2)
+             tipo *= 1;
+          conta++;
+          tempo_ultima_marcacao = millis();
+       }
+    }
+    if(conta == ULTIMA_MARCACAO_ESQUERDA && (direita || esquerda)){
+      para();
+     conta = 0;
+    }
+}
+//Lê os sensores guias e retorna valores maiores que 0 para direita e menor que zero para esquerda
+float lerPontoAtual() {
+  int numerador = 0;
+  int denominador = 0;
+
+  for (int i = 0; i < NUMERO_DE_SENSORES; i++) {
+    if (lerSensor(sensores[i])) {
+      numerador += erros[i];
+      denominador++;
+    }
+  }
+
+  if (denominador == 0) 
+    denominador = 1;
+
+  return numerador / denominador;
+}
+/*################################### FUNÇÕES DE CONTROLE ############################################### */
+void prevenirWindUp() {
+    if(somatorioDeErro >= VELOCIDADE_MAXIMA)
+        somatorioDeErro = somatorioDeErro / 3;
+}
+double TipoDeCorrecao(int tipo)
+{
+ 
+  if(tipo == RETA)
+    return (kpr * erro) + (kdr * (erro - erroAnterior)/deltaTime/1000.00) + (kir * somatorioDeErro*deltaTime/1000.00);
+  else
+    if(tipo == CURVA)
+      return (kpc * erro) + (kdc * (erro - erroAnterior)/deltaTime/1000.00) + (kic * somatorioDeErro*deltaTime/1000.00); 
+}
+void correcaoCurva(int correcao_curva) {
+  if(erro > 0) {
+    Serial.println("Erro positivo ");
+    esquerdo = velocidadeAtualCurva + correcao_curva;
+    direito = velocidadeAtualCurva - correcao_curva;
+  }
+  else if(erro < 0) {
+    Serial.println("Erro negativo");
+    esquerdo = velocidadeAtualCurva + correcao_curva;
+    direito = velocidadeAtualCurva - correcao_curva;
+  }
+  else {
+    Serial.println("Sem erro");  
+    esquerdo = velocidadeAtualCurva;
+    direito = velocidadeAtualCurva;
+  }
+  motorEsquerdo(esquerdo);
+  motorDireito(direito);
+  Serial.print("Motor Esquerdo: ");
+  Serial.println(esquerdo);    
+  Serial.print("Motor Direito : ");
+  Serial.println(direito);
+  Serial.print("Correcao : ");
+  Serial.println(correcao_curva);  
+}
+
+void correcaoReta(int correcao_reta) {
+  if(erro > 0) {
+    Serial.println("Erro positivo");
+    direito  = velocidadeAtualReta;
+    esquerdo = velocidadeAtualReta + correcao_reta;
+  }
+    else if(erro < 0) {
+      Serial.println("Erro negativo"); 
+      direito = velocidadeAtualReta - correcao_reta;    
+      esquerdo = velocidadeAtualReta;
+    }
+      else
+      {
+        Serial.println("Sem erro");  
+        direito = velocidadeAtualReta;
+        esquerdo = velocidadeAtualReta;
+      }
+  motorEsquerdo(esquerdo);
+  motorDireito(direito);
+  Serial.print("Motor Esquerdo: ");
+  Serial.println(esquerdo);    
+  Serial.print("Motor Direito : ");
+  Serial.println(direito);
+  Serial.print("Correcao : ");
+  Serial.println(correcao_reta);  
+}
+
+/*#################################### FUNÇÕES DE PARADA ##########################################*/
+void para() 
+{
+  delay(TEMPO_PARA_PARAR);
+
+    while(1)
+    {
+      digitalWrite(13, HIGH);
+      motorEsquerdo(0);
+      motorDireito(0);
+      delay(100);
+      digitalWrite(13, LOW);
+      Serial.println(" Parado");
+      delay(100);
+    }
+}
+//############################### FUNÇÕES DOS MOTORES ##########################################
+
+//Função para permitir apenas potências abaixo da máxima
+int limitadorPotencia(int potencia) {
+  int novaPotencia = potencia;
+  if (abs(potencia) > VELOCIDADE_MAXIMA) {
+    novaPotencia = (potencia / abs(potencia)) * VELOCIDADE_MAXIMA;
+  }
+  return novaPotencia;
+}
+
+//Controla o motor esquerdo para uma dada potência após ser limitada
+void motorEsquerdo(int potencia) {
+  int pwr = limitadorPotencia(potencia);
+  
+  if(DEBUG == 0){
+    if (pwr < 0) {
+      analogWrite(MOTOR_E1, abs(pwr));
+      digitalWrite(MOTOR_E2, LOW);
+    }
+    else {
+      analogWrite(MOTOR_E2, abs(pwr));
+      digitalWrite(MOTOR_E1, LOW);
+    }
+  }
+}
+
+//Controla o motor direito para uma dada potência após ser limitada
+void motorDireito(int potencia) {
+  int pwr = limitadorPotencia(potencia);
+  if(DEBUG==0){
+    if (pwr < 0) {
+      digitalWrite(MOTOR_D1, LOW);
+      analogWrite(MOTOR_D2, abs(pwr));
+    }
+    else {
+      digitalWrite(MOTOR_D2, LOW);
+      analogWrite(MOTOR_D1, abs(pwr));
+    }
+  }
+}
