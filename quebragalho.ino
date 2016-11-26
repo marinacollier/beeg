@@ -15,6 +15,7 @@
 
 #define DEBUG 0
 
+
 //Define as entradas de sinal do controle
 #define AILE A0
 #define ELE A1
@@ -35,10 +36,10 @@ int ele_potencia = 0;
 int aile_potencia = 0;
 
 //limiar aile ele
-#define LIMIAR_MAX_AILE 40
-#define LIMIAR_MIN_AILE -40
-#define LIMIAR_MAX_ELE  40 
-#define LIMIAR_MIN_ELE  -40 
+#define LIMIAR_MAX_AILE 50
+#define LIMIAR_MIN_AILE -50
+#define LIMIAR_MAX_ELE  50 
+#define LIMIAR_MIN_ELE  -50 
 
 void setup() {
   // put your setup code here, to run once:
@@ -51,8 +52,8 @@ void setup() {
   pinMode(MOTOR_D2, OUTPUT);
   Serial.begin(9600);
   Serial.flush();
+  
 }
-
 void loop() {
   
   //leitura dos canais do controle
@@ -95,7 +96,7 @@ void loop() {
          delay(500); 
          } 
  
-    if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
+    if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE-70) && (ele_potencia <= LIMIAR_MAX_ELE))){
 
       digitalWrite(MOTOR_E1,LOW);
       digitalWrite(MOTOR_E2,LOW);
@@ -142,10 +143,10 @@ void loop() {
     //condição para direita
   else if(((ele_potencia >= LIMIAR_MIN_ELE)  && (ele_potencia <= LIMIAR_MAX_ELE)) && (aile_potencia > LIMIAR_MAX_AILE)){
 
-      analogWrite(MOTOR_E1,aile_potencia);
-      digitalWrite(MOTOR_E2,LOW);
-      digitalWrite(MOTOR_D1,LOW);
-      digitalWrite(MOTOR_D2,aile_potencia);
+      analogWrite(MOTOR_E2,aile_potencia);
+      digitalWrite(MOTOR_E1,LOW);
+      digitalWrite(MOTOR_D2,LOW);
+      analogWrite(MOTOR_D1,aile_potencia);
       
       if(DEBUG){
       Serial.print("potencia: ");
@@ -157,10 +158,10 @@ void loop() {
    //condição para esquerda
   else if(((ele_potencia >= LIMIAR_MIN_ELE)  && (ele_potencia <= LIMIAR_MAX_ELE)) && (aile_potencia < LIMIAR_MIN_AILE)){  
  
-      digitalWrite(MOTOR_E1,LOW);
-      digitalWrite(MOTOR_E2,abs(aile_potencia));
-      analogWrite(MOTOR_D1,abs(aile_potencia));
-      digitalWrite(MOTOR_D2,LOW);
+      digitalWrite(MOTOR_E2,LOW);
+      analogWrite(MOTOR_E1,abs(aile_potencia));
+      analogWrite(MOTOR_D2,abs(aile_potencia));
+      digitalWrite(MOTOR_D1,LOW);
    
       if(DEBUG){
       Serial.print("potencia: ");
@@ -173,9 +174,9 @@ void loop() {
     //diagonal frente direita
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){
 
-      analogWrite(MOTOR_E1,ele_potencia);
+      analogWrite(MOTOR_E1,ele_potencia-aile_potencia);
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,ele_potencia*MULT);
+      analogWrite(MOTOR_D1,ele_potencia);
       digitalWrite(MOTOR_D2,LOW);
      
      if(DEBUG){ 
@@ -189,9 +190,9 @@ void loop() {
    //diagonal frente esquerda
     else if((ele_potencia > LIMIAR_MAX_ELE) && (aile_potencia < LIMIAR_MIN_AILE)){
       
-      analogWrite(MOTOR_E1,abs(ele_potencia)*MULT);
+      analogWrite(MOTOR_E1,abs(ele_potencia));
       digitalWrite(MOTOR_E2,LOW);
-      analogWrite(MOTOR_D1,abs(ele_potencia));
+      analogWrite(MOTOR_D1,abs(ele_potencia+aile_potencia));
       digitalWrite(MOTOR_D2,LOW);
  
       if(DEBUG){
@@ -206,7 +207,7 @@ void loop() {
     else if((ele_potencia < LIMIAR_MIN_ELE) && (aile_potencia > LIMIAR_MAX_AILE)){ 
       
       digitalWrite(MOTOR_E1,LOW);
-      analogWrite(MOTOR_E2,abs(ele_potencia)*MULT);
+      analogWrite(MOTOR_E2,abs(ele_potencia+aile_potencia));
       digitalWrite(MOTOR_D1,LOW);
       analogWrite(MOTOR_D2,abs(ele_potencia)); 
       if(DEBUG){
@@ -223,7 +224,7 @@ void loop() {
       digitalWrite(MOTOR_E1,LOW);
       analogWrite(MOTOR_E2,abs(ele_potencia));
       digitalWrite(MOTOR_D1,LOW);
-      analogWrite(MOTOR_D2,abs(ele_potencia)*MULT);
+      analogWrite(MOTOR_D2,abs(ele_potencia-aile_potencia));
 
       if(DEBUG){
      Serial.print("potencia: ");
@@ -262,3 +263,8 @@ int potenciaPwmEle(int sinal) {
         return potencia;
     }
   }
+  //x = pow(ele_potencia,2);
+  //y = pow(aile_potencia,2);
+//versor =sqrt(x+y);
+//versor = constrain(versor,-250,250);
+//
