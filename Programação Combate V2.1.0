@@ -1,4 +1,4 @@
-/* Programacao Combate V2.0.1.ino
+/* Programacao Combate V2.1.0.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão, Marcus Vinícius e kewin lima
  * 16/03/2015
@@ -135,31 +135,31 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
   
   if( potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2) ) // codição para os dois motores girarem para frente
   {   
-      analogWrite(MOTOR_E1,potenciaEsquerda);
+      analogWrite(MOTOR_E1,abs(potenciaEsquerda));
       analogWrite(MOTOR_E2,0);
-      analogWrite(MOTOR_D1,potenciaDireita);
+      analogWrite(MOTOR_D1,abs(potenciaDireita));
       analogWrite(MOTOR_D2,0);
   }
   else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2)) // condição para os dois motores girarem para tras 
   {   
       analogWrite(MOTOR_E1,0);
-   	  analogWrite(MOTOR_E2,potenciaEsquerda);     
+   	  analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
       analogWrite(MOTOR_D1,0);  
-      analogWrite(MOTOR_D2,potenciaDireita);
+      analogWrite(MOTOR_D2,abs(potenciaDireita));
   }
   else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2)) // condição motor direita frente e esquerda tras
   {
       analogWrite(MOTOR_E1,0);
-   	  analogWrite(MOTOR_E2,potenciaEsquerda);     
-      analogWrite(MOTOR_D1,potenciaDireita);
+   	  analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
+      analogWrite(MOTOR_D1,abs(potenciaDireita));
       analogWrite(MOTOR_D2,0);
   }
   else if(potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2))  // condição motor direita tras e esquerda frente
   { 
-      analogWrite(MOTOR_E1,potenciaEsquerda);
+      analogWrite(MOTOR_E1,abs(potenciaEsquerda));
       analogWrite(MOTOR_E2,0);
       analogWrite(MOTOR_D1,0);
-      analogWrite(MOTOR_D2,potenciaDireita);
+      analogWrite(MOTOR_D2,abs(potenciaDireita));
   }
 }
 
