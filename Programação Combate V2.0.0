@@ -133,28 +133,28 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
   potenciaEsquerda = limitadorDePotencia(potenciaEsquerda);
   potenciaDireita = limitadorDePotencia(potenciaDireita);
   
-  if( potenciaEsquerda > 0 && potenciaDireita > 0) // codição para os dois motores girarem para frente
+  if( potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2) ) // codição para os dois motores girarem para frente
   {   
       analogWrite(MOTOR_E1,potenciaEsquerda);
       analogWrite(MOTOR_E2,0);
       analogWrite(MOTOR_D1,potenciaDireita);
       analogWrite(MOTOR_D2,0);
   }
-  else if( potenciaEsquerda < 0 && potenciaDireita < 0) // condição para os dois motores girarem para tras 
+  else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2)) // condição para os dois motores girarem para tras 
   {   
       analogWrite(MOTOR_E1,0);
    	  analogWrite(MOTOR_E2,potenciaEsquerda);     
       analogWrite(MOTOR_D1,0);  
       analogWrite(MOTOR_D2,potenciaDireita);
   }
-  else if( potenciaEsquerda < 0 && potenciaDireita > 0) // condição motor direita frente e esquerda tras
+  else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2)) // condição motor direita frente e esquerda tras
   {
       analogWrite(MOTOR_E1,0);
    	  analogWrite(MOTOR_E2,potenciaEsquerda);     
       analogWrite(MOTOR_D1,potenciaDireita);
       analogWrite(MOTOR_D2,0);
   }
-  else if(potenciaEsquerda > 0 && potenciaDireita < 0)  // condição motor direita tras e esquerda frente
+  else if(potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2))  // condição motor direita tras e esquerda frente
   { 
       analogWrite(MOTOR_E1,potenciaEsquerda);
       analogWrite(MOTOR_E2,0);
