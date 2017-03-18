@@ -1,4 +1,4 @@
-/* Programacao Combate V2.1.1.ino
+/* Programacao Combate V2.2.1.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão, Marcus Vinícius e Kewin Lima
  * 16/03/2015
@@ -6,6 +6,7 @@
 
 //Inclui biblioteca para acesso a funções matemáticas avançadas
 #include <math.h>
+
 
 //Define os pinos que os motores estarão conectados
 #define MOTOR_E1 9
@@ -17,10 +18,10 @@
 #define DEBUG 1
 
 // [ 1 ]- Imprime a saida aile e ele, [ 2 ] - imprime a resposta para os motores, [ 3 ] - imprime ambos
-#define TIPO_DE_DEBUG 1
+#define TIPO_DE_DEBUG 2
 
 //Define o numero de interaões do filtro das entradas do controle
-#define NUMERO_DE_INTERACOES 1000
+#define NUMERO_DE_INTERACOES 20
 
 //Define o delay de espera para a vizualização na porta serial
 #define DELAY 400 
@@ -30,8 +31,8 @@
 #define PORTA_ELE  A0
 
 //Constantes para leitura do controle (Devem ser calibradas)
-#define ENTRADA_MAX 1900
-#define ENTRADA_MIN 1200
+#define ENTRADA_MAX 1892
+#define ENTRADA_MIN 1101
 
 //Constantes para saida para os motores
 #define SAIDA_MAX 255
@@ -67,17 +68,20 @@ void loop() {
   //leitura dos canais do controle
   aile_sinal = filtro(PORTA_AILE);
   ele_sinal = filtro(PORTA_ELE);
+  //constrain(aile_sinal, SAIDA_MIN, SAIDA_MAX);
+  //constrain(ele_sinal, SAIDA_MIN, SAIDA_MAX);
+  
   
   //Condicao para que o controle esteja em comunicacao com o receptor
   if(aile_sinal != 0 || ele_sinal !=0){
-      ele_potencia = potenciaPwm(ele_potencia);
-      aile_potencia = potenciaPwm(aile_potencia);
+      ele_potencia = potenciaPwm(ele_sinal);
+      aile_potencia = potenciaPwm(aile_sinal);
       
       //codicao parado
       if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
          movimentacao(0,0);
          imprimirDebug(0,0,"PARADO");
-  	  }
+      }
       //condição para frente
       else if(((aile_potencia > LIMIAR_MIN_AILE && aile_potencia < LIMIAR_MAX_AILE) &&  ele_potencia > LIMIAR_MAX_ELE)) {
          movimentacao(ele_potencia, ele_potencia);
@@ -89,7 +93,7 @@ void loop() {
          imprimirDebug(ele_potencia, ele_potencia,"TRAS");
       } 
       //condição para direita
-  	  else if((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) &&  (aile_potencia > LIMIAR_MAX_AILE)){
+      else if((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) &&  (aile_potencia > LIMIAR_MAX_AILE)){
          movimentacao(aile_potencia, -aile_potencia);
          imprimirDebug(aile_potencia, -aile_potencia,"DIREITA");
       }
@@ -116,7 +120,7 @@ void loop() {
       //diagonal tras esquerda
       else if((ele_potencia < LIMIAR_MIN_ELE && aile_potencia < LIMIAR_MIN_ELE)){ 
          movimentacao(abs(aile_potencia) - abs(ele_potencia), aile_potencia);
-         imprimirDebug(abs(aile_potencia) - abs(ele_potencia), aile_potencia,"TRAS ESQUERDA");
+         imprimirDebug(abs(aile_potencia) -abs(ele_potencia), aile_potencia,"TRAS ESQUERDA");
       }
   } 
   //CONDIÇÃO PARADO PARA CONTROLE DESLIGADO
@@ -143,14 +147,14 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
   else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2)) // condição para os dois motores girarem para tras 
   {   
       analogWrite(MOTOR_E1,0);
-   	  analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
+      analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
       analogWrite(MOTOR_D1,0);  
       analogWrite(MOTOR_D2,abs(potenciaDireita));
   }
   else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2)) // condição motor direita frente e esquerda tras
   {
       analogWrite(MOTOR_E1,0);
-   	  analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
+      analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
       analogWrite(MOTOR_D1,abs(potenciaDireita));
       analogWrite(MOTOR_D2,0);
   }
@@ -165,7 +169,7 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
 
 //Função que mapeia os valores e limita a potência
 int potenciaPwm(int sinal) {
-    int potencia = map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX); //mapeando o sinal ( RESPOSTA LINEAR )
+    int potencia = map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX);   //mapeando o sinal ( RESPOSTA LINEAR )
     return potencia;
 }
 
@@ -174,7 +178,7 @@ int limitadorDePotencia(int potencia)
 {
     if(abs(potencia) < SAIDA_MAX && abs(potencia) < SAIDA_MIN)
       return (potencia);
-  	else if(abs(potencia) > SAIDA_MAX)
+    else if(abs(potencia) > SAIDA_MAX)
       return (potencia/abs(potencia)) * SAIDA_MAX;   // Limitando potencia maxima
     else if(abs(potencia) < SAIDA_MIN)
       return (potencia/abs(potencia)) * SAIDA_MIN;   //Limitando potencia minima          
@@ -190,43 +194,43 @@ int filtro(int porta)
 }
 
 //Imprime na serial caso o DEBUG seja verdadeiro
-void imprimirDebug(int potenciaEsquerdo, int potenciaDireito, char direcao[25])
+void imprimirDebug(int potenciaEsquerdo, int potenciaDireito, const char direcao[25])
 {
-  	if (DEBUG)
+    if (DEBUG)
     {
-  		if(TIPO_DE_DEBUG == 1)
+      if(TIPO_DE_DEBUG == 1)
         {
             Serial.print(" AILE : ");
-  			Serial.print(aile_sinal);
-  			Serial.print(" | ELE : ");
-  			Serial.print(ele_sinal);
-          	Serial.print(" | ");
+        Serial.print(aile_sinal);
+        Serial.print(" | ELE : ");
+        Serial.print(ele_sinal);
+            Serial.print(" | ");
             Serial.println(direcao);
-  			delay(DELAY);
-    	}
-      	else if(TIPO_DE_DEBUG == 2)
+        delay(DELAY);
+      }
+        else if(TIPO_DE_DEBUG == 2)
         {            
             Serial.print(" Esquerdo : ");
-  			Serial.print(potenciaEsquerdo);
-  			Serial.print(" | Direito : ");
-  			Serial.print(potenciaDireito);
-  			Serial.print(" | ");
+        Serial.print(potenciaEsquerdo);
+        Serial.print(" | Direito : ");
+        Serial.print(potenciaDireito);
+        Serial.print(" | ");
             Serial.println(direcao);
-  			delay(DELAY);
+        delay(DELAY);
         }
-      	else if(TIPO_DE_DEBUG == 3)
+        else if(TIPO_DE_DEBUG == 3)
         {
             Serial.print(" AILE : ");
-  			Serial.print(aile_sinal);
-  			Serial.print(" | ELE : ");
-  			Serial.print(ele_sinal);
+        Serial.print(aile_sinal);
+        Serial.print(" | ELE : ");
+        Serial.print(ele_sinal);
             Serial.print(" | Esquerdo : ");
-  			Serial.print(potenciaEsquerdo);
-  			Serial.print(" | Direito : ");
-  			Serial.print(potenciaDireito);
-          	Serial.print(" | ");
+        Serial.print(potenciaEsquerdo);
+        Serial.print(" | Direito : ");
+        Serial.print(potenciaDireito);
+            Serial.print(" | ");
             Serial.println(direcao);
-  			delay(DELAY); 
+        delay(DELAY); 
         }
-  	}
+    }
 }
