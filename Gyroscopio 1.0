@@ -1,0 +1,111 @@
+int MOTOR_E1 = 9;
+int MOTOR_E2 = 5;
+int MOTOR_D1 = 6;
+int MOTOR_D2 = 3;
+
+#include <Wire.h>
+
+long accelX, accelY, accelZ;
+float gForceX, gForceY, gForceZ;
+
+long gyroX, gyroY, gyroZ;
+float rotX, rotY, rotZ;
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+  setupMPU();
+}
+
+
+void loop() {
+  recordAccelRegisters();
+  recordGyroRegisters();
+  //printData();
+  if(gForceZ<0.005){
+    MOTOR_E1 = 5;
+    MOTOR_E2 = 9;
+    MOTOR_D1 = 3;
+    MOTOR_D2 = 6;
+    Serial.println("INVERTIDO");
+    delay(300);
+  
+  }
+  else {
+ MOTOR_E1 = 9;
+ MOTOR_E2 = 5;
+ MOTOR_D1 = 6;
+ MOTOR_D2 = 3;
+ Serial.println("NORMAL");
+  delay(300);
+  }
+}
+
+void setupMPU(){
+  Wire.beginTransmission(0b1101000); //Isso é o endereço I2C do MPU (b1101000/b1101001 para AC0 low/high datasheet sec. 9.2)
+  Wire.write(0x6B); //Acessando o registrador 6B - Manejamento de Potência (Sec. 4.28)
+  Wire.write(0b00000000); //Colocando o registrador SLEEP register para 0. (Necessário; olhar nota na pag 9)
+  Wire.endTransmission();  
+  Wire.beginTransmission(0b1101000); //endereço I2C do MPU
+  Wire.write(0x1B); //Acessando o registrador 1B - Configuração do Gyro(Sec 4.4) 
+  Wire.write(0x00000000); //Colocando o gyro na escala máxima de +//- 250graus./s 
+  Wire.endTransmission(); 
+  Wire.beginTransmission(0b1101000); //endereço I2C do MPU
+  Wire.write(0x1C); //Acessando o registrador 1C - Configuração do Acelerômetro (Sec. 4.5) 
+  Wire.write(0b00000000); //Colocando o acelerômetro para +/- 2g
+  Wire.endTransmission(); 
+}
+
+void recordAccelRegisters() {
+  Wire.beginTransmission(0b1101000); //endereço I2C do MPU
+  Wire.write(0x3B); //Liberando os registradores para a leitura do Accel
+  Wire.endTransmission();
+  Wire.requestFrom(0b1101000,6); //Requisitando os registradore (3B - 40)
+  while(Wire.available() < 6);
+  accelX = Wire.read()<<8|Wire.read(); //Guardar os primeiros dois bytes em accelX
+  accelY = Wire.read()<<8|Wire.read(); //Guardar os dois bytes do meio em accelY
+  accelZ = Wire.read()<<8|Wire.read(); //Guardar os ultimos dois bytes em accelZ
+  processAccelData();
+}
+
+void processAccelData(){
+  gForceX = accelX / 16384.0;
+  gForceY = accelY / 16384.0; 
+  gForceZ = accelZ / 16384.0;
+}
+
+void recordGyroRegisters() {
+  Wire.beginTransmission(0b1101000); //endereço I2C do MPU
+  Wire.write(0x43); //Libenrado os registradores para a leitura do Gyro
+  Wire.endTransmission();
+  Wire.requestFrom(0b1101000,6); //Requisitando os registradores (43-48)
+  while(Wire.available() < 6);
+  gyroX = Wire.read()<<8|Wire.read(); //Guardar os primeiros dois bytes em GyroX
+  gyroY = Wire.read()<<8|Wire.read(); //Guardar os dois bytes do meio em GyroY
+  gyroZ = Wire.read()<<8|Wire.read(); //Guardar os ultimos dois bytes em GyroZ
+  processGyroData();
+}
+
+void processGyroData() {
+  rotX = gyroX / 131.0;
+  rotY = gyroY / 131.0; 
+  rotZ = gyroZ / 131.0;
+}
+
+void printData() {
+  Serial.print("Gyro (graus)");
+  Serial.print(" X=");
+  Serial.print(rotX);
+  Serial.print(" Y=");
+  Serial.print(rotY);
+  Serial.print(" Z=");
+  Serial.print(rotZ);
+  Serial.print(" Accel (g)");
+  Serial.print(" X=");
+  Serial.print(gForceX);
+  Serial.print(" Y=");
+  Serial.print(gForceY);
+  Serial.print(" Z=");
+  Serial.println(gForceZ);
+}
+
