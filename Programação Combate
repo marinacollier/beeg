@@ -70,8 +70,7 @@ void loop() {
   ele_sinal = filtro(PORTA_ELE);
   //constrain(aile_sinal, SAIDA_MIN, SAIDA_MAX);
   //constrain(ele_sinal, SAIDA_MIN, SAIDA_MAX);
-  
-  
+    
   //Condicao para que o controle esteja em comunicacao com o receptor
   if(aile_sinal != 0 || ele_sinal !=0){
       ele_potencia = potenciaPwm(ele_sinal);
@@ -169,7 +168,7 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
 
 //Função que mapeia os valores e limita a potência
 int potenciaPwm(int sinal) {
-    int potencia = map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX);   //mapeando o sinal ( RESPOSTA LINEAR )
+    int potencia = constrain(map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX),SAIDA_MIN, SAIDA_MAX);   //mapeando o sinal ( RESPOSTA LINEAR )
     return potencia;
 }
 
