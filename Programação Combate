@@ -1,3 +1,5 @@
+
+
 /* Programacao Combate V2.2.4.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão, Marcus Vinícius e Kewin Lima.
@@ -31,8 +33,8 @@
 #define PORTA_ELE  A0
 
 //Constantes para leitura do controle (Devem ser calibradas)
-#define ENTRADA_MAX 1892
-#define ENTRADA_MIN 1101
+#define ENTRADA_MAX 1894
+#define ENTRADA_MIN 1102
 
 //Constantes para saida para os motores
 #define SAIDA_MAX 255
@@ -133,8 +135,14 @@ void loop() {
 //Função que cuida da movimentação dos motores
 void movimentacao(int potenciaEsquerda, int potenciaDireita)
 {
-  potenciaEsquerda = limitadorDePotencia(potenciaEsquerda);
-  potenciaDireita = limitadorDePotencia(potenciaDireita);
+  if(potenciaEsquerda != 0 && potenciaDireita != 0){
+    potenciaEsquerda = limitadorDePotencia(potenciaEsquerda);
+    potenciaDireita = limitadorDePotencia(potenciaDireita);
+  }
+  else {
+  potenciaEsquerda = 0;
+  potenciaDireita = 0;
+  }
   
   if( potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2) ) // codição para os dois motores girarem para frente
   {   
@@ -163,6 +171,12 @@ void movimentacao(int potenciaEsquerda, int potenciaDireita)
       analogWrite(MOTOR_E2,0);
       analogWrite(MOTOR_D1,0);
       analogWrite(MOTOR_D2,abs(potenciaDireita));
+  }
+  else if(potenciaEsquerda == 0 && potenciaDireita == 0){
+      analogWrite(MOTOR_E1,0);
+      analogWrite(MOTOR_E2,0);
+      analogWrite(MOTOR_D1,0);
+      analogWrite(MOTOR_D2,0);
   }
 }
 
