@@ -1,14 +1,10 @@
-
-
 /* Programacao Combate V2.2.4.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão, Marcus Vinícius e Kewin Lima.
  * 16/03/2015
  */
-
 //Inclui biblioteca para acesso a funções matemáticas avançadas
-#include <math.h>
-#include <Wire.h>
+#include < math.h > #include < Wire.h >
 
 long accelX, accelY, accelZ;
 float gForceX, gForceY, gForceZ;
@@ -18,10 +14,10 @@ float rotX, rotY, rotZ;
 
 
 //Define os pinos que os motores estarão conectados
-int MOTOR_E1 =  9;
-int MOTOR_E2 =  5;
-int MOTOR_D1 =  6;
-int MOTOR_D2 =  3;
+int MOTOR_E1 = 9;
+int MOTOR_E2 = 5;
+int MOTOR_D1 = 6;
+int MOTOR_D2 = 3;
 
 //Caso 1 a saida será pela serial caso 0 será a resposta para os motores
 #define DEBUG 1
@@ -36,16 +32,13 @@ int MOTOR_D2 =  3;
 #define DELAY 0
 
 //Define as entradas de sinal do controle
-#define PORTA_AILE A1
-#define PORTA_ELE  A0
+#define PORTA_AILE A1#define PORTA_ELE A0
 
 //Constantes para leitura do controle (Devem ser calibradas)
-#define ENTRADA_MAX 1894
-#define ENTRADA_MIN 1102
+#define ENTRADA_MAX 1894#define ENTRADA_MIN 1102
 
 //Constantes para saida para os motores
-#define SAIDA_MAX 255
-#define SAIDA_MIN -255
+#define SAIDA_MAX 255#define SAIDA_MIN - 255
 
 //Vão guardar as leituras vindas do controle
 int aile_sinal = 0;
@@ -54,12 +47,10 @@ int ele_potencia = 0;
 int aile_potencia = 0;
 
 //limiar aile ele
-#define LIMIAR_MAX_AILE  50
-#define LIMIAR_MIN_AILE -50
-#define LIMIAR_MAX_ELE   50 
-#define LIMIAR_MIN_ELE  -50 
+#define LIMIAR_MAX_AILE 50#define LIMIAR_MIN_AILE - 50#define LIMIAR_MAX_ELE 50#define LIMIAR_MIN_ELE - 50
 
-void setup() {
+void setup()
+{
   // put your setup code here, to run once:
   pinMode(PORTA_AILE, INPUT);
   pinMode(PORTA_ELE, INPUT);
@@ -74,258 +65,276 @@ void setup() {
   Serial.flush();
 }
 
-void loop() {
+void loop()
+{
   recordAccelRegisters();
-  if(gForceZ<0.005){
+  if (gForceZ < 0.005)
+  {
     MOTOR_E1 = 5;
     MOTOR_E2 = 9;
     MOTOR_D1 = 3;
     MOTOR_D2 = 6;
     Serial.println("INVERTIDO");
-   // delay(300);
-  
+    // delay(300);
   }
-  else {
- MOTOR_E1 = 9;
- MOTOR_E2 = 5;
- MOTOR_D1 = 6;
- MOTOR_D2 = 3;
- Serial.println("NORMAL");
- // delay(300);
+  else
+  {
+    MOTOR_E1 = 9;
+    MOTOR_E2 = 5;
+    MOTOR_D1 = 6;
+    MOTOR_D2 = 3;
+    Serial.println("NORMAL");
+    // delay(300);
   }
-  
+
   //leitura dos canais do controle
   aile_sinal = filtro(PORTA_AILE);
   ele_sinal = filtro(PORTA_ELE);
   //constrain(aile_sinal, SAIDA_MIN, SAIDA_MAX);
   //constrain(ele_sinal, SAIDA_MIN, SAIDA_MAX);
-    
   //Condicao para que o controle esteja em comunicacao com o receptor
-  if(aile_sinal != 0 || ele_sinal !=0){
-      ele_potencia = potenciaPwm(ele_sinal);
-      aile_potencia = potenciaPwm(aile_sinal);
-      
-      //codicao parado
-      if(((aile_potencia >= LIMIAR_MIN_AILE)  && (aile_potencia <= LIMIAR_MAX_AILE))  && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE))){
-         movimentacao(0,0);
-         imprimirDebug(0,0,"PARADO");
-      }
-      //condição para frente
-      else if(((aile_potencia > LIMIAR_MIN_AILE && aile_potencia < LIMIAR_MAX_AILE) &&  ele_potencia > LIMIAR_MAX_ELE)) {
-         movimentacao(ele_potencia, ele_potencia);
-         imprimirDebug(ele_potencia, ele_potencia,"FRENTE");
-      }
-      //condição para trás
-      else if(((aile_potencia > LIMIAR_MIN_AILE && aile_potencia < LIMIAR_MAX_AILE) &&  ele_potencia < LIMIAR_MIN_ELE)){
-         movimentacao(ele_potencia, ele_potencia); 
-         imprimirDebug(ele_potencia, ele_potencia,"TRAS");
-      } 
-      //condição para direita
-      else if((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) &&  (aile_potencia > LIMIAR_MAX_AILE)){
-         movimentacao(aile_potencia, -aile_potencia);
-         imprimirDebug(aile_potencia, -aile_potencia,"DIREITA");
-      }
-      //condição para esquerda
-      else if(((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) &&  aile_potencia < LIMIAR_MIN_AILE)){
-         movimentacao(-aile_potencia, aile_potencia);
-         imprimirDebug(-aile_potencia, aile_potencia,"ESQUERDA");
-      }
-      //diagonal frente direita
-      else if(ele_potencia > LIMIAR_MAX_ELE && aile_potencia > LIMIAR_MAX_ELE){
-         movimentacao(aile_potencia,(ele_potencia - aile_potencia));
-         imprimirDebug(aile_potencia,ele_potencia - aile_potencia,"FRENTE DIREITA");
-      }
-      //diagonal frente esquerda
-      else if(ele_potencia > LIMIAR_MAX_ELE && aile_potencia < LIMIAR_MIN_ELE){
-         movimentacao(aile_potencia + ele_potencia, abs(aile_potencia));
-         imprimirDebug(aile_potencia + ele_potencia, abs(aile_potencia),"FRENTE ESQUERDA");
-      }
-      //diagonal tras direita
-      else if((ele_potencia < LIMIAR_MIN_ELE && aile_potencia > LIMIAR_MAX_ELE)){ 
-         movimentacao( -aile_potencia, aile_potencia + ele_potencia);
-         imprimirDebug( -aile_potencia, aile_potencia + ele_potencia,"TRAS DIREITA");
-      }      
-      //diagonal tras esquerda
-      else if((ele_potencia < LIMIAR_MIN_ELE && aile_potencia < LIMIAR_MIN_ELE)){ 
-         movimentacao(abs(aile_potencia) - abs(ele_potencia), aile_potencia);
-         imprimirDebug(abs(aile_potencia) -abs(ele_potencia), aile_potencia,"TRAS ESQUERDA");
-      }
-  } 
-  //CONDIÇÃO PARADO PARA CONTROLE DESLIGADO
-  else if((aile_sinal == 0) && (ele_sinal == 0))
+  if (aile_sinal != 0 || ele_sinal != 0)
   {
-      movimentacao(0,0);
-      imprimirDebug(0,0,"TRAVADO");
+    ele_potencia = potenciaPwm(ele_sinal);
+    aile_potencia = potenciaPwm(aile_sinal);
+
+    //codicao parado
+    if (((aile_potencia >= LIMIAR_MIN_AILE) && (aile_potencia <= LIMIAR_MAX_AILE)) && ((ele_potencia >= LIMIAR_MIN_ELE) && (ele_potencia <= LIMIAR_MAX_ELE)))
+    {
+      movimentacao(0, 0);
+      imprimirDebug(0, 0, "PARADO");
+    }
+    //condição para frente
+    else if (((aile_potencia > LIMIAR_MIN_AILE && aile_potencia < LIMIAR_MAX_AILE) && ele_potencia > LIMIAR_MAX_ELE))
+    {
+      movimentacao(ele_potencia, ele_potencia);
+      imprimirDebug(ele_potencia, ele_potencia, "FRENTE");
+    }
+    //condição para trás
+    else if (((aile_potencia > LIMIAR_MIN_AILE && aile_potencia < LIMIAR_MAX_AILE) && ele_potencia < LIMIAR_MIN_ELE))
+    {
+      movimentacao(ele_potencia, ele_potencia);
+      imprimirDebug(ele_potencia, ele_potencia, "TRAS");
+    }
+    //condição para direita
+    else if ((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) && (aile_potencia > LIMIAR_MAX_AILE))
+    {
+      movimentacao(aile_potencia, -aile_potencia);
+      imprimirDebug(aile_potencia, -aile_potencia, "DIREITA");
+    }
+    //condição para esquerda
+    else if (((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) && aile_potencia < LIMIAR_MIN_AILE))
+    {
+      movimentacao(-aile_potencia, aile_potencia);
+      imprimirDebug(-aile_potencia, aile_potencia, "ESQUERDA");
+    }
+    //diagonal frente direita
+    else if (ele_potencia > LIMIAR_MAX_ELE && aile_potencia > LIMIAR_MAX_ELE)
+    {
+      movimentacao(aile_potencia, (ele_potencia - aile_potencia));
+      imprimirDebug(aile_potencia, ele_potencia - aile_potencia, "FRENTE DIREITA");
+    }
+    //diagonal frente esquerda
+    else if (ele_potencia > LIMIAR_MAX_ELE && aile_potencia < LIMIAR_MIN_ELE)
+    {
+      movimentacao(aile_potencia + ele_potencia, abs(aile_potencia));
+      imprimirDebug(aile_potencia + ele_potencia, abs(aile_potencia), "FRENTE ESQUERDA");
+    }
+    //diagonal tras direita
+    else if ((ele_potencia < LIMIAR_MIN_ELE && aile_potencia > LIMIAR_MAX_ELE))
+    {
+      movimentacao(-aile_potencia, aile_potencia + ele_potencia);
+      imprimirDebug(-aile_potencia, aile_potencia + ele_potencia, "TRAS DIREITA");
+    }
+    //diagonal tras esquerda
+    else if ((ele_potencia < LIMIAR_MIN_ELE && aile_potencia < LIMIAR_MIN_ELE))
+    {
+      movimentacao(abs(aile_potencia) - abs(ele_potencia), aile_potencia);
+      imprimirDebug(abs(aile_potencia) - abs(ele_potencia), aile_potencia, "TRAS ESQUERDA");
+    }
   }
-} 
+  //CONDIÇÃO PARADO PARA CONTROLE DESLIGADO
+  else if ((aile_sinal == 0) && (ele_sinal == 0))
+  {
+    movimentacao(0, 0);
+    imprimirDebug(0, 0, "TRAVADO");
+  }
+}
 
 //Função que cuida da movimentação dos motores
 void movimentacao(int potenciaEsquerda, int potenciaDireita)
 {
-  if(potenciaEsquerda != 0 && potenciaDireita != 0){
+  if (potenciaEsquerda != 0 && potenciaDireita != 0)
+  {
     potenciaEsquerda = limitadorDePotencia(potenciaEsquerda);
     potenciaDireita = limitadorDePotencia(potenciaDireita);
   }
-  else {
-  potenciaEsquerda = 0;
-  potenciaDireita = 0;
-  }
-  
-  if( potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2) ) // codição para os dois motores girarem para frente
-  {   
-      analogWrite(MOTOR_E1,abs(potenciaEsquerda));
-      analogWrite(MOTOR_E2,0);
-      analogWrite(MOTOR_D1,abs(potenciaDireita));
-      analogWrite(MOTOR_D2,0);
-  }
-  else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2)) // condição para os dois motores girarem para tras 
-  {   
-      analogWrite(MOTOR_E1,0);
-      analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
-      analogWrite(MOTOR_D1,0);  
-      analogWrite(MOTOR_D2,abs(potenciaDireita));
-  }
-  else if( potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN)/2)) // condição motor direita frente e esquerda tras
+  else
   {
-      analogWrite(MOTOR_E1,0);
-      analogWrite(MOTOR_E2,abs(potenciaEsquerda));     
-      analogWrite(MOTOR_D1,abs(potenciaDireita));
-      analogWrite(MOTOR_D2,0);
+    potenciaEsquerda = 0;
+    potenciaDireita = 0;
   }
-  else if(potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN)/2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN)/2))  // condição motor direita tras e esquerda frente
-  { 
-      analogWrite(MOTOR_E1,abs(potenciaEsquerda));
-      analogWrite(MOTOR_E2,0);
-      analogWrite(MOTOR_D1,0);
-      analogWrite(MOTOR_D2,abs(potenciaDireita));
+
+  if (potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN) / 2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN) / 2)) // codição para os dois motores girarem para frente
+  {
+    analogWrite(MOTOR_E1, abs(potenciaEsquerda));
+    analogWrite(MOTOR_E2, 0);
+    analogWrite(MOTOR_D1, abs(potenciaDireita));
+    analogWrite(MOTOR_D2, 0);
   }
-  else if(potenciaEsquerda == 0 && potenciaDireita == 0){
-      analogWrite(MOTOR_E1,0);
-      analogWrite(MOTOR_E2,0);
-      analogWrite(MOTOR_D1,0);
-      analogWrite(MOTOR_D2,0);
+  else if (potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN) / 2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN) / 2)) // condição para os dois motores girarem para tras 
+  {
+    analogWrite(MOTOR_E1, 0);
+    analogWrite(MOTOR_E2, abs(potenciaEsquerda));
+    analogWrite(MOTOR_D1, 0);
+    analogWrite(MOTOR_D2, abs(potenciaDireita));
+  }
+  else if (potenciaEsquerda < ((SAIDA_MAX + SAIDA_MIN) / 2) && potenciaDireita > ((SAIDA_MAX + SAIDA_MIN) / 2)) // condição motor direita frente e esquerda tras
+  {
+    analogWrite(MOTOR_E1, 0);
+    analogWrite(MOTOR_E2, abs(potenciaEsquerda));
+    analogWrite(MOTOR_D1, abs(potenciaDireita));
+    analogWrite(MOTOR_D2, 0);
+  }
+  else if (potenciaEsquerda > ((SAIDA_MAX + SAIDA_MIN) / 2) && potenciaDireita < ((SAIDA_MAX + SAIDA_MIN) / 2)) // condição motor direita tras e esquerda frente
+  {
+    analogWrite(MOTOR_E1, abs(potenciaEsquerda));
+    analogWrite(MOTOR_E2, 0);
+    analogWrite(MOTOR_D1, 0);
+    analogWrite(MOTOR_D2, abs(potenciaDireita));
+  }
+  else if (potenciaEsquerda == 0 && potenciaDireita == 0)
+  {
+    analogWrite(MOTOR_E1, 0);
+    analogWrite(MOTOR_E2, 0);
+    analogWrite(MOTOR_D1, 0);
+    analogWrite(MOTOR_D2, 0);
   }
 }
 
 //Função que mapeia os valores e limita a potência
-int potenciaPwm(int sinal) {
-    int potencia = constrain(map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX),SAIDA_MIN, SAIDA_MAX);   //mapeando o sinal ( RESPOSTA LINEAR )
-    return potencia;
+int potenciaPwm(int sinal)
+{
+  int potencia = constrain(map(sinal, ENTRADA_MIN, ENTRADA_MAX, SAIDA_MIN, SAIDA_MAX), SAIDA_MIN, SAIDA_MAX); //mapeando o sinal ( RESPOSTA LINEAR )
+  return potencia;
 }
 
 //Limitador de Potencia
 int limitadorDePotencia(int potencia)
 {
-    if(abs(potencia) < SAIDA_MAX && abs(potencia) < SAIDA_MIN)
-      return (potencia);
-    else if(abs(potencia) > SAIDA_MAX)
-      return (potencia/abs(potencia)) * SAIDA_MAX;   // Limitando potencia maxima
-    else if(abs(potencia) < SAIDA_MIN)
-      return (potencia/abs(potencia)) * SAIDA_MIN;   //Limitando potencia minima          
+  if (abs(potencia) < SAIDA_MAX && abs(potencia) < SAIDA_MIN) return (potencia);
+  else if (abs(potencia) > SAIDA_MAX) return (potencia / abs(potencia)) * SAIDA_MAX; // Limitando potencia maxima
+  else if (abs(potencia) < SAIDA_MIN) return (potencia / abs(potencia)) * SAIDA_MIN; //Limitando potencia minima          
 }
 
 //Filtra os valores brutos recebidos do controle
 int filtro(int porta)
 {
   unsigned long somador = 0;
-  for(int n=0; n<NUMERO_DE_INTERACOES; n++)
-    somador += pulseIn(porta, HIGH);
-  return ( somador/NUMERO_DE_INTERACOES );
+  for (int n = 0; n < NUMERO_DE_INTERACOES; n++)
+  somador += pulseIn(porta, HIGH);
+  return (somador / NUMERO_DE_INTERACOES);
 }
 
 //Imprime na serial caso o DEBUG seja verdadeiro
 void imprimirDebug(int potenciaEsquerdo, int potenciaDireito, const char direcao[25])
 {
-    if (DEBUG)
+  if (DEBUG)
+  {
+    if (TIPO_DE_DEBUG == 1)
     {
-      if(TIPO_DE_DEBUG == 1)
-        {
-            Serial.print(" AILE : ");
-            Serial.print(aile_sinal);
-            Serial.print(" | ELE : ");
-            Serial.print(ele_sinal);
-            Serial.print(" | ");
-            Serial.println(direcao);
-            delay(DELAY);
-      }
-        else if(TIPO_DE_DEBUG == 2)
-        {            
-            Serial.print(" Esquerdo : ");
-            Serial.print(potenciaEsquerdo);
-            Serial.print(" | Direito : ");
-            Serial.print(potenciaDireito);
-            Serial.print(" | ");
-            Serial.println(direcao);
-            delay(DELAY);
-        }
-        else if(TIPO_DE_DEBUG == 3)
-        {
-            Serial.print(" AILE : ");
-            Serial.print(aile_sinal);
-            Serial.print(" | ELE : ");
-            Serial.print(ele_sinal);
-            Serial.print(" | Esquerdo : ");
-            Serial.print(potenciaEsquerdo);
-            Serial.print(" | Direito : ");
-            Serial.print(potenciaDireito);
-            Serial.print(" | ");
-            Serial.println(direcao);
-            delay(DELAY); 
-        }
+      Serial.print(" AILE : ");
+      Serial.print(aile_sinal);
+      Serial.print(" | ELE : ");
+      Serial.print(ele_sinal);
+      Serial.print(" | ");
+      Serial.println(direcao);
+      delay(DELAY);
     }
+    else if (TIPO_DE_DEBUG == 2)
+    {
+      Serial.print(" Esquerdo : ");
+      Serial.print(potenciaEsquerdo);
+      Serial.print(" | Direito : ");
+      Serial.print(potenciaDireito);
+      Serial.print(" | ");
+      Serial.println(direcao);
+      delay(DELAY);
+    }
+    else if (TIPO_DE_DEBUG == 3)
+    {
+      Serial.print(" AILE : ");
+      Serial.print(aile_sinal);
+      Serial.print(" | ELE : ");
+      Serial.print(ele_sinal);
+      Serial.print(" | Esquerdo : ");
+      Serial.print(potenciaEsquerdo);
+      Serial.print(" | Direito : ");
+      Serial.print(potenciaDireito);
+      Serial.print(" | ");
+      Serial.println(direcao);
+      delay(DELAY);
+    }
+  }
 }
-void setupMPU(){
+void setupMPU()
+{
   Wire.beginTransmission(0b1101000); //Isso é o endereço I2C do MPU (b1101000/b1101001 para AC0 low/high datasheet sec. 9.2)
   Wire.write(0x6B); //Acessando o registrador 6B - Manejamento de Potência (Sec. 4.28)
   Wire.write(0b00000000); //Colocando o registrador SLEEP register para 0. (Necessário; olhar nota na pag 9)
-  Wire.endTransmission();  
+  Wire.endTransmission();
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
   Wire.write(0x1B); //Acessando o registrador 1B - Configuração do Gyro(Sec 4.4) 
   Wire.write(0x00000000); //Colocando o gyro na escala máxima de +//- 250graus./s 
-  Wire.endTransmission(); 
+  Wire.endTransmission();
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
   Wire.write(0x1C); //Acessando o registrador 1C - Configuração do Acelerômetro (Sec. 4.5) 
   Wire.write(0b00000000); //Colocando o acelerômetro para +/- 2g
-  Wire.endTransmission(); 
+  Wire.endTransmission();
 }
 
-void recordAccelRegisters() {
+void recordAccelRegisters()
+{
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
   Wire.write(0x3B); //Liberando os registradores para a leitura do Accel
   Wire.endTransmission();
-  Wire.requestFrom(0b1101000,6); //Requisitando os registradore (3B - 40)
-  while(Wire.available() < 6);
-  accelX = Wire.read()<<8|Wire.read(); //Guardar os primeiros dois bytes em accelX
-  accelY = Wire.read()<<8|Wire.read(); //Guardar os dois bytes do meio em accelY
-  accelZ = Wire.read()<<8|Wire.read(); //Guardar os ultimos dois bytes em accelZ
+  Wire.requestFrom(0b1101000, 6); //Requisitando os registradore (3B - 40)
+  while (Wire.available() < 6);
+  accelX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em accelX
+  accelY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em accelY
+  accelZ = Wire.read() << 8 | Wire.read(); //Guardar os ultimos dois bytes em accelZ
   processAccelData();
 }
 
-void processAccelData(){
+void processAccelData()
+{
   gForceX = accelX / 16384.0;
-  gForceY = accelY / 16384.0; 
+  gForceY = accelY / 16384.0;
   gForceZ = accelZ / 16384.0;
 }
 
-void recordGyroRegisters() {
+void recordGyroRegisters()
+{
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
   Wire.write(0x43); //Libenrado os registradores para a leitura do Gyro
   Wire.endTransmission();
-  Wire.requestFrom(0b1101000,6); //Requisitando os registradores (43-48)
-  while(Wire.available() < 6);
-  gyroX = Wire.read()<<8|Wire.read(); //Guardar os primeiros dois bytes em GyroX
-  gyroY = Wire.read()<<8|Wire.read(); //Guardar os dois bytes do meio em GyroY
-  gyroZ = Wire.read()<<8|Wire.read(); //Guardar os ultimos dois bytes em GyroZ
+  Wire.requestFrom(0b1101000, 6); //Requisitando os registradores (43-48)
+  while (Wire.available() < 6);
+  gyroX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em GyroX
+  gyroY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em GyroY
+  gyroZ = Wire.read() << 8 | Wire.read(); //Guardar os ultimos dois bytes em GyroZ
   processGyroData();
 }
 
-void processGyroData() {
+void processGyroData()
+{
   rotX = gyroX / 131.0;
-  rotY = gyroY / 131.0; 
+  rotY = gyroY / 131.0;
   rotZ = gyroZ / 131.0;
 }
 
-void printData() {
+void printData()
+{
   Serial.print("Gyro (graus)");
   Serial.print(" X=");
   Serial.print(rotX);
