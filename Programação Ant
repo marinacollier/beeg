@@ -5,16 +5,21 @@
  * 16/03/2015
  */
 //Inclui biblioteca para acesso a funções matemáticas avançadas
-#include < math.h > #include < Wire.h >
+#include <math.h> 
+//Inclui biblioteca para utilizar o giroscopio
+#include <Wire.h>
 
-long accelX, accelY, accelZ;
-float gForceX, gForceY, gForceZ;
+//long accelX, accelY, accelZ;
+//float gForceX, gForceY, gForceZ;
 
-long gyroX, gyroY, gyroZ;
-float rotX, rotY, rotZ;
+//long gyroX, gyroY;
+long gyroZ;
+//float rotX, rotY;
+float rotZ;
 
 
-//Define os pinos que os motores estarão conectados
+/*Define os pinos que os motores estarão conectados
+essas variaveis irão se alterar de acordo com o ângulo em Z */
 int MOTOR_E1 = 9;
 int MOTOR_E2 = 5;
 int MOTOR_D1 = 6;
@@ -33,13 +38,16 @@ int MOTOR_D2 = 3;
 #define DELAY 0
 
 //Define as entradas de sinal do controle
-#define PORTA_AILE A1#define PORTA_ELE A0
+#define PORTA_AILE A1
+#define PORTA_ELE A0
 
 //Constantes para leitura do controle (Devem ser calibradas)
-#define ENTRADA_MAX 1894#define ENTRADA_MIN 1102
+#define ENTRADA_MAX 1894
+#define ENTRADA_MIN 1102
 
 //Constantes para saida para os motores
-#define SAIDA_MAX 255#define SAIDA_MIN - 255
+#define SAIDA_MAX 255
+#define SAIDA_MIN -255
 
 //Vão guardar as leituras vindas do controle
 int aile_sinal = 0;
@@ -48,7 +56,10 @@ int ele_potencia = 0;
 int aile_potencia = 0;
 
 //limiar aile ele
-#define LIMIAR_MAX_AILE 50#define LIMIAR_MIN_AILE - 50#define LIMIAR_MAX_ELE 50#define LIMIAR_MIN_ELE - 50
+#define LIMIAR_MAX_AILE 50
+#define LIMIAR_MIN_AILE - 50
+#define LIMIAR_MAX_ELE 50
+#define LIMIAR_MIN_ELE - 50
 
 void setup()
 {
@@ -62,14 +73,17 @@ void setup()
   pinMode(MOTOR_D2, OUTPUT);
   Serial.begin(9600);
   Wire.begin();
-  setupMPU();
+  setupMPU(); // Função que inicializa o giroscopio e suas leituras.
   Serial.flush();
 }
 
 void loop()
 {
-  recordAccelRegisters();
-  if (gForceZ < 0.005)
+  recordGyroRegisters();
+  /* essa é a condição de inversão dos motores, caso o valor seja menor que 0,005, caso o contrário ou seja, quando for positivo 
+  OBS: o 0,005 se refere ao 0 real, pois há ruído eletrônico na leitura, e esse foi o menor valor encontrado*/
+  
+  if (rotZ < 0.005)
   {
     MOTOR_E1 = 5;
     MOTOR_E2 = 9;
@@ -78,6 +92,7 @@ void loop()
     Serial.println("INVERTIDO");
     // delay(300);
   }
+  /* Para o restante dos valores, ou seja "virado para cima" os motores não irão se inverter e , a rotação será a mesma*/
   else
   {
     MOTOR_E1 = 9;
@@ -293,7 +308,7 @@ void setupMPU()
   Wire.write(0b00000000); //Colocando o acelerômetro para +/- 2g
   Wire.endTransmission();
 }
-
+/*
 void recordAccelRegisters()
 {
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
@@ -313,41 +328,47 @@ void processAccelData()
   gForceY = accelY / 16384.0;
   gForceZ = accelZ / 16384.0;
 }
+*/
 
+
+/*Função que libera 6 registradores para a leitura do sinal
+e desloca 2 bytes, a partir da subtração de 8-6, pra reduzir a leitura de ~1000 
+até ~0-100 e a função wire.read(), trabalha com o sinal da variavel*/
 void recordGyroRegisters()
 {
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
-  Wire.write(0x43); //Libenrado os registradores para a leitura do Gyro
+  Wire.write(0x43); //Liberado os registradores para a leitura do Gyro
   Wire.endTransmission();
   Wire.requestFrom(0b1101000, 6); //Requisitando os registradores (43-48)
   while (Wire.available() < 6);
-  gyroX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em GyroX
-  gyroY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em GyroY
+  //gyroX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em GyroX
+  //gyroY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em GyroY
   gyroZ = Wire.read() << 8 | Wire.read(); //Guardar os ultimos dois bytes em GyroZ
   processGyroData();
 }
-
+/*Essa função faz com que várias leituras sejam realizadas, fazendo 
+com que não haja probabilidade de a variavel se manter fixa ou aumentar com o tempo*/
 void processGyroData()
 {
-  rotX = gyroX / 131.0;
-  rotY = gyroY / 131.0;
+ // rotX = gyroX / 131.0;
+ //rotY = gyroY / 131.0;
   rotZ = gyroZ / 131.0;
 }
 
 void printData()
 {
-  Serial.print("Gyro (graus)");
-  Serial.print(" X=");
-  Serial.print(rotX);
-  Serial.print(" Y=");
-  Serial.print(rotY);
+  Serial.print("Gyro (graus)"); //imprime o angulo em graus
+  //Serial.print(" X=");
+  //Serial.print(rotX);
+ // Serial.print(" Y=");
+ // Serial.print(rotY);
   Serial.print(" Z=");
   Serial.print(rotZ);
-  Serial.print(" Accel (g)");
-  Serial.print(" X=");
-  Serial.print(gForceX);
-  Serial.print(" Y=");
-  Serial.print(gForceY);
-  Serial.print(" Z=");
-  Serial.println(gForceZ);
+  //Serial.print(" Accel (g)");
+ // Serial.print(" X=");
+ //Serial.print(gForceX);
+ // Serial.print(" Y=");
+ // Serial.print(gForceY);
+  //Serial.print(" Z=");
+ // Serial.println(gForceZ);
 }
