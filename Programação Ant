@@ -1,4 +1,3 @@
-
 /* Programacao Combate V2.2.4.ino
  * Código para controle de robô beetleweight
  * Autores: Isabella Galvão, Marcus Vinícius e Kewin Lima.
@@ -9,12 +8,12 @@
 //Inclui biblioteca para utilizar o giroscopio
 #include <Wire.h>
 
-//long accelX, accelY, accelZ;
-//float gForceX, gForceY, gForceZ;
+long accelX, accelY, accelZ;
+float gForceX, gForceY, gForceZ;
 
-//long gyroX, gyroY;
+long gyroX, gyroY;
 long gyroZ;
-//float rotX, rotY;
+float rotX, rotY;
 float rotZ;
 
 
@@ -79,11 +78,11 @@ void setup()
 
 void loop()
 {
-  recordGyroRegisters();
+  recordAccelRegisters();
   /* essa é a condição de inversão dos motores, caso o valor seja menor que 0,005, caso o contrário ou seja, quando for positivo 
   OBS: o 0,005 se refere ao 0 real, pois há ruído eletrônico na leitura, e esse foi o menor valor encontrado*/
   
-  if (rotZ < 0.005)
+  if (gForceZ < 0.005)
   {
     MOTOR_E1 = 5;
     MOTOR_E2 = 9;
@@ -308,7 +307,7 @@ void setupMPU()
   Wire.write(0b00000000); //Colocando o acelerômetro para +/- 2g
   Wire.endTransmission();
 }
-/*
+
 void recordAccelRegisters()
 {
   Wire.beginTransmission(0b1101000); //endereço I2C do MPU
@@ -328,7 +327,7 @@ void processAccelData()
   gForceY = accelY / 16384.0;
   gForceZ = accelZ / 16384.0;
 }
-*/
+
 
 
 /*Função que libera 6 registradores para a leitura do sinal
@@ -341,8 +340,8 @@ void recordGyroRegisters()
   Wire.endTransmission();
   Wire.requestFrom(0b1101000, 6); //Requisitando os registradores (43-48)
   while (Wire.available() < 6);
-  //gyroX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em GyroX
-  //gyroY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em GyroY
+  gyroX = Wire.read() << 8 | Wire.read(); //Guardar os primeiros dois bytes em GyroX
+  gyroY = Wire.read() << 8 | Wire.read(); //Guardar os dois bytes do meio em GyroY
   gyroZ = Wire.read() << 8 | Wire.read(); //Guardar os ultimos dois bytes em GyroZ
   processGyroData();
 }
@@ -368,7 +367,7 @@ void printData()
  // Serial.print(" X=");
  //Serial.print(gForceX);
  // Serial.print(" Y=");
- // Serial.print(gForceY);
-  //Serial.print(" Z=");
- // Serial.println(gForceZ);
+  //Serial.print(gForceY);
+  Serial.print(" Z=");
+  Serial.println(gForceZ);
 }
