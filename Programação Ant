@@ -158,7 +158,7 @@ void loop()
     else if (((ele_potencia > LIMIAR_MIN_ELE && ele_potencia < LIMIAR_MAX_ELE) && aile_potencia < LIMIAR_MIN_AILE))
     {
       movimentacao(aile_potencia, -aile_potencia);
-      imprimirDebug(-aile_potencia, aile_potencia, "ESQUERDA");
+      imprimirDebug(aile_potencia, -aile_potencia, "ESQUERDA");
     }
     //diagonal frente direita
     else if (ele_potencia > LIMIAR_MAX_ELE && aile_potencia > LIMIAR_MAX_ELE)
